@@ -68,7 +68,7 @@ colors={'red':(241/255.,88/255.,84/255.),\
         'blue':(93/255,165/255.,218/255.),\
         'yellow':(222/255., 207/255., 63/255),\
         'black':(0.,0.,0.)}
-collab = ['red','blue','black']
+collab = ['green','orange','purple']
 linew  = [2,3,5,4]
 linest = ['-','--','-.',':']
 
@@ -87,7 +87,7 @@ for i in range(0,kappav.size):
 	plt.grid(True)
 #plt.semilogy(freq,four.real,ls='None',marker='x',markersize=2)#,freq,four.imag)
 	#print(collab[i])
-	plt.semilogy(freq,four.imag,color=colors[collab[i]],ls=linest[0],lw=linew[0])#,freq,four.imag)
+	plt.semilogy(freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0])#,freq,four.imag)
 plt.legend([0.0001,0.1,1],fontsize=20)
 plt.xlabel('Frequency',fontsize=30)
 plt.ylabel('$P(\omega)$',fontsize=30)
