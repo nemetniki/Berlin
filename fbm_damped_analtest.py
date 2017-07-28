@@ -28,14 +28,14 @@ def rho_d(D, gamma, oma, kappa, nd, t):
 ##################
 ### PARAMETERS ###
 ##################
-t     = np.linspace(0,25000,2**21)
+t     = np.linspace(0,4000,300001)
 D     = 0.7
 oma   = 10 #in GHz
 kappav = np.array([0.0001,0.1,1])  #in GHz
 gamma = 0.001 #in GHz
 hbar  = 6.62607004 #???* 10**(-2)
 kb    = 1.38064852
-T     = 3000.00001
+T     = 0.00001#3000.00001
 nd    = 1/(np.exp(hbar*oma/kb/T)-1)
 
 ################
@@ -74,7 +74,7 @@ for i in range(0,kappav.size):
 plt.legend([0.0001,0.1,1],fontsize=20)
 plt.xlabel('Frequency',fontsize=30)
 plt.ylabel('$\Re[P(\omega)]$',fontsize=30)
-plt.xlim(-42,42)
+plt.xlim(-35,35)
 plt.ylim(10**(-2),10**4)
 
 ### TIMER ENDS ###
@@ -84,6 +84,6 @@ m = int((end-now)/60.-h*60)
 s = int((end-now)-h*3600-m*60)
 print('%02d:%02d:%02d' %(h,m,s))
 #plt.show()
-plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_T=3000.png")
+plt.savefig("/home/niki/Dokumente/Python/plot_analytest.png")
 
 
