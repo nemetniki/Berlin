@@ -31,13 +31,13 @@ def rho_d(gd, gam, oma, kappa, nd, endt,Nt):#, endk, Nk):
 	coef = np.abs(gd/B)**2
 
 	def Nd2k(k,ex,Ca,Sa):
-		cof = coef*(g02/c/k)**2
+		cof = coef*g02/(c*k)**2
 		den = 1/np.abs(-1j*c*k+B)**2
 		Ck  = np.cos(c*k*t)
 		Sk  = np.sin(c*k*t)
 		A2  = (c*k)**2 * (2*Ca-ex) * ex
 		B2  = (kappa**2+oma**2) * (2*Ck-1)
-		AB  = oma*(Ca+Ck-(Ca*Ck+Sk*Sa))*ex + kappa*(Sa-Sk-(Sa*Ck-Sk*Ca))*ex
+		AB  = oma*(Ck+(Ca-Ca*Ck-Sk*Sa)*ex) + kappa*(-Sk+(Sa-Sa*Ck+Sk*Ca)*ex)
 		return cof * ( 1 - den*(A2 + B2 - 2*c*k*AB) )
 	
 	rho_final = np.zeros(Nt, complex)
@@ -59,7 +59,7 @@ def rho_d(gd, gam, oma, kappa, nd, endt,Nt):#, endk, Nk):
 #				(A[k]*np.exp(-B*t)+B*np.exp(A[k]*t)) ) +\
 #			np.abs(A[k])**2 * np.exp(-2*kappa*t) + np.abs(B)**2 +\
 #			2*np.real( A[k] * np.conjugate(B) * np.exp(-(A[k]+B)*t) ))
-		integ,err = quad(Nd2k,-150,150,args=(ex,Ca,Sa,),points=sings)
+		integ,err = quad(Nd2k,-300,300,args=(ex,Ca,Sa,),points=sings)
 		rho_bath = np.exp(-.5*integ)
 		rho_phi  = np.exp( -1j * coef * ( ex*Sa- oma/2/kappa*(1-ex**2) ) )
 		rho_final[it] = .5*rho_cav*rho_bath*rho_phi*np.exp(-gam*t)
@@ -72,7 +72,7 @@ kappav = np.array([0.0001,0.1,1])  #in GHz
 gam    = 0.001 #in GHz
 hbar   = 6.62607004 #???* 10**(-2)
 kb     = 1.38064852
-T      = 0.00001
+T      = 3000.00001
 nd     = 1/(np.exp(hbar*oma/kb/T)-1)
 endt   = 10000
 Nt     = 2**21
@@ -90,7 +90,7 @@ collab = ['green','orange','purple']
 linew  = [2,3,5,4]
 linest = ['-','--','-.',':']
 
-for i in range(0,kappav.size):
+for i in range(kappav.size-1,-1,-1):
 	kappa=kappav[i]
 	print("kappa is: ",kappav[i])
 	sys.stdout.flush()	
@@ -122,7 +122,7 @@ for i in range(0,kappav.size):
 #plt.semilogy(freq,four.real,ls='None',marker='x',markersize=2)#,freq,four.imag)
 	#print(collab[i])
 	plt.semilogy(freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0])#,freq,four.imag)
-plt.legend([0.0001,0.1,1],fontsize=20)
+plt.legend([1,0.1,0.0001],fontsize=20)
 plt.xlabel('Frequency',fontsize=30)
 plt.ylabel('$P(\omega)$',fontsize=30)
 #plt.xlim(-35,35)
@@ -133,6 +133,6 @@ m = int((end-now)/60.-h*60)
 s = int((end-now)-h*3600-m*60)
 print('%02d:%02d:%02d' %(h,m,s))
 #plt.show()
-plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_100_T=0.png")
+plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_100_T=3000.png")
 
 
