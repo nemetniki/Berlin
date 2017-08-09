@@ -21,11 +21,16 @@ now = time.time()
 ###############################
 ### TIME-DEPENDENT FUNCTION ###
 ###############################
-def rho_d(gd, gam, oma, kappa, nd, endt,Nt, k):
+def rho_nodamp_T(D, gamma, oma,nd, t):
+	return np.exp(-D**2/oma**2*((2*nd+1)*(1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t))*.5*np.exp(-gamma*t)
 
-	dt  = (endt)/(Nt+1)
+def rho_nodamp_F(D, gamma, oma,nd, t):
+	return (1+D**2/oma**2*2*(1-np.cos(oma*t)))*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
+
+def rho_d(gd, gam, oma, kappa, nd, endt, Nt, k, therm, Fock):
+
+	dt  = (endt)/(Nt-1)
 	dk  = k[1]-k[0]
-#	c    = 0.3
 	c    = 0.003
 	g02  = kappa*2*c/np.pi
 	B    = 1j*oma + kappa
@@ -45,6 +50,8 @@ def rho_d(gd, gam, oma, kappa, nd, endt,Nt, k):
 		AB  = oma*(Ck+(Ca-Ca*Ck-Sk*Sa)*ex) + kappa*(-Sk+(Sa-Sa*Ck+Sk*Ca)*ex)
 
 		return cof * ( 1 - den*(A2 + B2 - 2*c*k*AB) )
+
+	nk = 1/(np.exp(therm*c*np.abs(k))-1)
 	
 	####################################
 	### EVALUATION FOR EACH TIMESTEP ###
@@ -52,39 +59,47 @@ def rho_d(gd, gam, oma, kappa, nd, endt,Nt, k):
 	rho_final = np.zeros(Nt, complex)
 	for it in range(0,Nt):
 
-		t    = it*dt*2*np.pi
+		t    = it*dt#*2*np.pi
 		ex   = np.exp(-kappa*t)
 		Ca   = np.cos(oma*t)
 		Sa   = np.sin(oma*t)
 
 		gamma2  = coef * ( 1 + ex**2 - 2*ex*Ca ) #|gamma|^2
-		rho_cav = np.exp(-.5 * gamma2 * (2*nd+1))
+#		rho_cav = (1 + gamma2) * np.exp(- 0.5* gamma2)
 		
-		ksum = np.sum(Nd2k(k,ex,Ca,Sa)*dk)			
-		rho_bath = np.exp(-.5*(ksum))
+		ksum = np.sum(Nd2k(k,ex,Ca,Sa)*(2*nk+1)*dk)			
+#		rho_bath = np.exp(-.5*(ksum))
 
 		rho_phi  = np.exp( -1j * coef * ( ex*Sa- oma/2/kappa*(1-ex**2) ) )
-		rho_final[it] = .5*rho_cav*rho_bath*rho_phi*np.exp(-gam*t)
+		if Fock==True:
+			rho_final[it] = .5 * (1+gamma2) * np.exp( - 0.5*(gamma2+ksum) - 1j * coef * ( ex*Sa- oma/2/kappa*(1-ex**2) ) - 1j*ome*t - gam*t)
+		else:
+			rho_final[it] = .5 * np.exp( - 0.5*(gamma2*(2*nd+1)+ksum) - 1j * coef * ( ex*Sa- oma/2/kappa*(1-ex**2) ) - 1j*ome*t - gam*t)
 
 	return rho_final
 
 ##################	
 ### PARAMETERS ###
 ##################
-D      = 0.7
+Fock   = False
+show   = False
+
+D      = .7
 oma    = 10 #in GHz
 kappav = np.array([0.0001,0.1,1])  #in GHz
 gam    = 0.001 #in GHz
-#hbar   = 6.62607004 #???* 10**(-2)
-#kb     = 1.38064852
-#T      = 0.00001
-nd     = 1.#/(np.exp(hbar*oma/kb/T)-1)
-endt   = 2000.
-Nt     = 2**16
+hbar   = 6.62607004 
+kb     = 1.38064852
+T      = 3000.#00001
+nd     = 1./(np.exp(hbar*oma/kb/T)-1)
+endt   = 20000.
+Nt     = 2**18
+t      = np.linspace(0,endt,Nt)
 endk   = 5000.
-#endk   = 30.
 Nk     = 10000
-k      = np.linspace(-endk,endk,Nk)
+ome    = 0.
+k      = np.linspace(-endk,endk,Nk)# + ome*100.
+therm  = hbar/(kb*T)
 
 ################
 ### PLOTTING ###
@@ -104,6 +119,12 @@ linest = ['-','--','-.',':']
 
 fig,ax = plt.subplots(1,2,figsize=(25,8))
 
+if Fock==True:
+	rho_norm = rho_nodamp_F(D,gam,oma, nd,t)
+else:
+	rho_norm = rho_nodamp_T(D,gam,oma, nd,t)
+norm = np.abs(np.sum(rho_norm*2*endt/(Nt)))**2
+
 for i in range(0,kappav.size):
 #for i in range(kappav.size-1,-1,-1):
 
@@ -114,7 +135,9 @@ for i in range(0,kappav.size):
 	#################################################
 	### EVALUATION OF THE TIME-DEPENDENT SOLUTION ###
 	#################################################
-	evol=rho_d(D,gam,oma,kappa,nd,endt,Nt,k)
+	rho_wn=rho_d(D,gam,oma,kappa,nd,endt,Nt,k,therm,Fock)
+	evol = rho_wn/np.sqrt(norm)
+	ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])
 	now2 = time.time()
 	nowh = int((now2-now)/3600.)
 	nowm = int((now2-now)/60.-nowh*60)
@@ -126,8 +149,8 @@ for i in range(0,kappav.size):
 	### FOURIER TRANSFORM ###
 	#########################
 	fourr = np.fft.fft(evol)
-	four = np.fft.fftshift(fourr)*2/fourr.size
-	freqr = np.fft.fftfreq(Nt,(endt)/(Nt+1))
+	four = np.fft.fftshift(fourr)*2/(Nt)*endt/np.sqrt(norm)
+	freqr = np.fft.fftfreq(Nt,(endt)/(Nt-1))
 	freq = np.fft.fftshift(freqr)
 
 	now3 = time.time()
@@ -140,20 +163,22 @@ for i in range(0,kappav.size):
 	############
 	### PLOT ###
 	############
-	ax[0].semilogy(freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0])
-	ax[1].semilogy(freq,four.imag,color=colors[collab[i]],ls=linest[i],lw=linew[0])
+	ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0])
+	ax[1].grid(True)
+
 ax[0].grid(True)
 ax[1].grid(True)
-ax[0].legend([0.0001,.1,1],fontsize=20)
-ax[1].legend([0.0001,.1,1],fontsize=20)
-#ax[0].legend([1,0.1,0.0001],fontsize=20)
-#ax[1].legend([1,0.1,0.0001],fontsize=20)
-ax[0].set_xlabel('Frequency',fontsize=30)
-ax[1].set_xlabel('Frequency',fontsize=30)
-ax[0].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
-ax[1].set_ylabel('$\Im{P(\omega)}$',fontsize=30)
-ax[0].set_ylim(10**(-8),1)
-ax[1].set_ylim(10**(-8),1)
+ax[0].legend([0.0001,0.1,1],fontsize=20)
+ax[1].legend([0.0001,0.1,1],fontsize=20)
+ax[0].set_xlabel('$t$ (10 ps)',fontsize=30)
+ax[1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
+ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
+ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
+#ax[0].set_ylim(-0.01,.25)
+ax[0].set_xlim(0,200)
+ax[1].set_ylim(10**(-8),10)
+ax[1].set_xlim(-40,40)
+
 
 ##################
 ### TIMER ENDS ###
@@ -163,8 +188,13 @@ h = int((end-now)/3600.)
 m = int((end-now)/60.-h*60)
 s = int((end-now)-h*3600-m*60)
 print('%02d:%02d:%02d' %(h,m,s))
-#plt.show()
-plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=50_10000_10to11_nd=1.png")
-#plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=50_10000_10to11_nd=1_wide.png")
+
+if show==True:
+	plt.show()
+else:
+	if Fock==True:
+		plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=0_Fock1_s.png")
+	else:
+		plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=%d_wide_s.png" % T)
 
 

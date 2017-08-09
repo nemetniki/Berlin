@@ -61,7 +61,7 @@ def rho_d(gd, gam, oma, kappa, nd, endt, Nt, k, therm):
 		gamma2  = coef * ( 1 + ex**2 - 2*ex*Ca ) #|gamma|^2
 		rho_cav = np.exp(-.5 * gamma2 * (2*nd+1))
 		
-		ksum = np.sum(Nd2k(k,ex,Ca,Sa)*nk*dk)			
+		ksum = np.sum(Nd2k(k,ex,Ca,Sa)*(2*nk+1)*dk)			
 		rho_bath = np.exp(-.5*(ksum))
 
 		rho_phi  = np.exp( -1j * coef * ( ex*Sa- oma/2/kappa*(1-ex**2) ) )
@@ -80,10 +80,10 @@ hbar   = 6.62607004
 kb     = 1.38064852
 T      = 0.00001
 nd     = 1.#/(np.exp(hbar*oma/kb/T)-1)
-endt   = 2000.
-Nt     = 2**18
-endk   = 50.
-Nk     = 200000
+endt   = 1000.
+Nt     = 2**16
+endk   = 5000.
+Nk     = 10000
 k      = np.linspace(-endk,endk,Nk)
 therm  = hbar/(kb*T)
 
@@ -127,7 +127,7 @@ for i in range(0,kappav.size):
 	### FOURIER TRANSFORM ###
 	#########################
 	fourr = np.fft.fft(evol)
-	four = np.fft.fftshift(fourr)
+	four = np.fft.fftshift(fourr)*2/fourr.size
 	freqr = np.fft.fftfreq(Nt,(endt)/(Nt+1))
 	freq = np.fft.fftshift(freqr)
 
@@ -153,8 +153,8 @@ ax[0].set_xlabel('Frequency',fontsize=30)
 ax[1].set_xlabel('Frequency',fontsize=30)
 ax[0].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 ax[1].set_ylabel('$\Im{P(\omega)}$',fontsize=30)
-#ax[0].set_ylim(10**(-4),10**4)
-#ax[1].set_ylim(10**(-4),10**4)
+ax[0].set_ylim(10**(-8),1)
+ax[1].set_ylim(10**(-8),1)
 
 ##################
 ### TIMER ENDS ###
@@ -165,6 +165,7 @@ m = int((end-now)/60.-h*60)
 s = int((end-now)-h*3600-m*60)
 print('%02d:%02d:%02d' %(h,m,s))
 #plt.show()
-plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=50_therm_T=0_nd=1.png")
+#plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=0_nd=1.png")
+plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=0_nd=1_wide.png")
 
 
