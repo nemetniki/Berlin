@@ -39,17 +39,30 @@ def rho_d(gd, gam, oma, kappa, nd, endt, Nt, k, therm, Fock):
 	#################
 	### |N_d^k|^2 ###
 	#################
-	def Nd2k(k,ex,Ca,Sa):
+	def Nd2k(k,ex,Ca,Sa,Ck,Sk,Cak,Sak):
 
 		cof = coef*g02/(c*k)**2
 		den = 1/(kappa**2+(oma-c*k)**2)
-		Ck  = np.cos(c*k*t)
-		Sk  = np.sin(c*k*t)
 		A2  = (c*k)**2 * (2*Ca-ex) * ex
 		B2  = (kappa**2+oma**2) * (2*Ck-1)
-		AB  = oma*(Ck+(Ca-Ca*Ck-Sk*Sa)*ex) + kappa*(-Sk+(Sa-Sa*Ck+Sk*Ca)*ex)
+		AB  = oma*(Ck+(Ca-Cak)*ex) + kappa*(-Sk+(Sa-Sak)*ex)
 
 		return cof * ( 1 - den*(A2 + B2 - 2*c*k*AB) )
+
+	def phif(k,ex,Ca,Sa,Ck,Sk,Cak,Sak):
+
+		den = 1/np.abs(B-1j*c*k)**2
+		Ck  = np.cos(c*k*t)
+		Sk  = np.sin(c*k*t)
+		dc  = 1/(c*k)
+		dB  = 1/np.abs(B)**2 
+		t1  = -dc**2*(c*k*t-Sk)
+		t2  = dB * ( dc*(kappa*Sk-oma*Ck-(kappa*Sa+oma*Ca)*ex) \
+			     +Sa*ex - oma/(2*kappa)*(1-ex) )
+		t3  = den*( dc * ( kappa+(kappa*Sak + (oma-c*k)*Cak)*ex ) +\
+			    dB * ( kappa*(2*oma-c*k)*(1-Cak*ex) - (kappa**2-oma*(oma-c*k))*Sak ) )
+		
+		return g02*gd**2*den * (t1+t2+t3)
 
 	nk = 1/(np.exp(therm*c*np.abs(k))-1)
 	
@@ -63,18 +76,22 @@ def rho_d(gd, gam, oma, kappa, nd, endt, Nt, k, therm, Fock):
 		ex   = np.exp(-kappa*t)
 		Ca   = np.cos(oma*t)
 		Sa   = np.sin(oma*t)
-
-		gamma2  = coef * ( 1 + ex**2 - 2*ex*Ca ) #|gamma|^2
-#		rho_cav = (1 + gamma2) * np.exp(- 0.5* gamma2)
+		Ck   = np.cos(c*k*t)
+		Sk   = np.sin(c*k*t)
+		Cak  = Ca*Ck+Sa*Sk
+		Sak  = Sa*Ck - Ca*Sk
+		Fg   = coef * ( Sa*ex + oma/(2*kappa)*(ex**2-1) )	
 		
-		ksum = np.sum(Nd2k(k,ex,Ca,Sa)*(2*nk+1)*dk)			
-#		rho_bath = np.exp(-.5*(ksum))
+		gamma2  = coef * ( 1 + ex**2 - 2*ex*Ca ) #|gamma|^2
+		
+		ksum_b = np.sum(Nd2k(k,ex,Ca,Sa,Ck,Sk,Cak,Sak)*(2*nk+1)*dk)
+		
+		ksum_p = np.sum(phif(k,ex,Ca,Sa,Ck,Sk,Cak,Sak)*dk)
 
-		rho_phi  = np.exp( -1j * coef * ( ex*Sa- oma/2/kappa*(1-ex**2) ) )
 		if Fock==True:
-			rho_final[it] = .5 * (1+gamma2) * np.exp( - 0.5*(gamma2+ksum) - 1j * coef * ( ex*Sa- oma/2/kappa*(1-ex**2) ) - 1j*ome*t - gam*t)
+			rho_final[it] = .5 * (1+gamma2) * np.exp( - 0.5*(gamma2+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
 		else:
-			rho_final[it] = .5 * np.exp( - 0.5*(gamma2*(2*nd+1)+ksum) - 1j * coef * ( ex*Sa- oma/2/kappa*(1-ex**2) ) - 1j*ome*t - gam*t)
+			rho_final[it] = .5 * np.exp( - 0.5*(gamma2*(2*nd+1)+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
 
 	return rho_final
 
@@ -93,7 +110,7 @@ kb     = 1.38064852
 T      = 3000.#00001
 nd     = 1./(np.exp(hbar*oma/kb/T)-1)
 endt   = 20000.
-Nt     = 2**18
+Nt     = 2**14
 t      = np.linspace(0,endt,Nt)
 endk   = 5000.
 Nk     = 10000

@@ -1,6 +1,6 @@
 #!/usr/bin/python3.4
 import matplotlib as mpl
-mpl.use('Agg')
+#mpl.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -33,7 +33,7 @@ def rho_fb(D, gam, oma, kappa, nd, endt, Nt, tau, k, therm, Fock):
 	dk  = k[1]-k[0]
 	c   = 0.003
 	g0  = np.sqrt(kappa*2*c/np.pi)
-	gk  = g0*np.sin(k*c*tau*dt)
+	gk  = g0#*np.sin(k*c*tau*dt)
 	A   = -1j*c*k
 	B   = 1j*oma + kappa
 	Br  = 1/B
@@ -91,29 +91,31 @@ def rho_fb(D, gam, oma, kappa, nd, endt, Nt, tau, k, therm, Fock):
 		rho_final[it] = .5 * np.exp( cav  + bath - 1j*Phi - gam*it*dt )				
 
 	t=np.linspace(0,endt,Nt)
-	print("cav",cav)
-	cavc = -.5*D**2/oma**2 * ( 1 + np.exp(-kappa*t[-1]) - 2*np.exp(-2*kappa*t[-1])*np.cos(oma*t[-1]) )
-	print("cavc", cavc)
-	print("F",F[-1])
-	Fc = D*np.exp(-B*t[-1])
-	print("Fc",Fc)
-	print("Gk",Gk)
-	Gkc = -1j*gk*D/(A+B) * ( np.exp(A*t[-1]) - np.exp(-B*t[-1]) )
-	print("Gkc",Gkc)
-	print("Nk",Nk)
+	print("t-tc",it*dt-t[-1])
+#	print("tc",t[-1])
+#	print("cav",cav)
+	cavc = -.5*D**2/oma**2 * ( 1 + np.exp(-2*kappa*t[-1]) - 2*np.exp(-kappa*t[-1])*np.cos(oma*t[-1]) )
+	print("cav-cavc", cav-cavc)
+#	print("F",F[-1])
+#	Fc = D*np.exp(-B*t[-1])
+#	print("F-Fc",F[-1]-Fc)
+#	print("Gk",Gk)
+#	Gkc = -1j*gk*D/(A+B) * ( np.exp(A*t[-1]) - np.exp(-B*t[-1]) )
+#	print("Gk-Gkc",Gk-Gkc)
+#	print("Nk",Nk)
 	Nkc = 1j*gk*D/(A*B) * ( 1 - 1/(A+B)*( A*np.exp(-B*t[-1])+B*np.exp(A*t[-1]) ) )
-	print("Nkc",Nkc)
+	print("Nk-Nkc",Nkc)
 	print("bath",bath)
 	integ = np.abs(D/B)**2*(2*kappa*t[-1] + (1-np.exp(-2*kappa*t[-1])) +2*kappa/np.abs(B)**2*(-2*kappa+np.conjugate(B)*np.exp(-B*t[-1])+B*np.exp(-np.conjugate(B)*t[-1])))
 	bathc=-integ
 	print("bathc",bathc)
-	Nka = np.abs(Nk)**2
-	print("Nka2",Nka)
-	Nkc2 = np.abs(g0*D/A/B)**2*( 1 - 1/np.abs(A+B)**2* ( np.abs(A)**2*(2*np.cos(oma*t[-1])-np.exp(-kappa*t[-1])) * np.exp(-kappa*t[-1]) +\
-							np.abs(B)**2*(2*np.cos(c*k*t[-1])-1)-\
-							2*oma*c*k*( ( np.cos(oma*t[-1])-np.cos((oma-c*k)*t[-1]))*np.exp(-kappa*t[-1] ) + np.cos(c*k*t[-1]) )-
-							2*kappa*c*k*( ( np.sin(oma*t[-1])-np.sin((oma-c*k)*t[-1]))*np.exp(-kappa*t[-1] ) - np.sin(c*k*t[-1]) ) ) )
-	print("Nkc2",Nkc2)
+#	Nka = np.abs(Nk)**2
+#	print("Nka2",Nka)
+#	Nkc2 = np.abs(gk*D/A/B)**2*( 1 - 1/np.abs(A+B)**2* ( np.abs(A)**2*(2*np.cos(oma*t[-1])-np.exp(-kappa*t[-1])) * np.exp(-kappa*t[-1]) +\
+#							np.abs(B)**2*(2*np.cos(c*k*t[-1])-1)-\
+#							2*oma*c*k*( ( np.cos(oma*t[-1])-np.cos((oma-c*k)*t[-1]))*np.exp(-kappa*t[-1] ) + np.cos(c*k*t[-1]) )-
+#							2*kappa*c*k*( ( np.sin(oma*t[-1])-np.sin((oma-c*k)*t[-1]))*np.exp(-kappa*t[-1] ) - np.sin(c*k*t[-1]) ) ) )
+#	print("Nkc2",Nkc2)
 	
 	print("phi",Phi)
 	phic = np.abs(D/B)**2 * ( np.exp(-kappa*t[-1])*np.sin(oma*t[-1]) - oma/2/kappa*(1-np.exp(-2*kappa*t[-1])) )
@@ -124,7 +126,7 @@ def rho_fb(D, gam, oma, kappa, nd, endt, Nt, tau, k, therm, Fock):
 ### PARAMETERS ###
 ##################
 Fock   = False
-show   = False
+show   = True
 
 D      = .7
 oma    = 10 #in GHz
@@ -134,12 +136,12 @@ hbar   = 6.62607004
 kb     = 1.38064852
 T      = 0.00001
 nd     = 1./(np.exp(hbar*oma/kb/T)-1)
-endt   = 20000.
-Nt     = 2**18
+endt   = 2000.
+Nt     = 2**15
 t      = np.linspace(0,endt,Nt)
 tau    = 10*Nt
 endk   = 5000.
-Nk     = 40000
+Nk     = 400
 ome    = 0.
 k      = np.linspace(-endk,endk,Nk)# + ome*100.
 therm  = hbar/(kb*T)
