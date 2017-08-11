@@ -22,7 +22,7 @@ def rho_damp_T(D, gamma, oma, kappa, nd, t):
 	B    = 1j*oma + kappa
 	dBa2 = 1/(oma**2 + kappa**2)
 
-	return np.exp(- D**2 * dBa2 * ( nd*(1+np.exp(-2*kappa*t)) + .5*(3-np.exp(-2*kappa*t)) + 1j*(oma**2-3*kappa**2)*dBa2*np.sin(oma*t)*np.exp(-kappa*t) - np.exp(-kappa*t)*np.cos(oma*t)*(1+2*nd+1j*4*oma*kappa*dBa2) - 1j*oma/2/kappa*(1-np.exp(-2*kappa*t)) + 2*kappa*t + 2*kappa*dBa2*(-2*np.conjugate(B)+ B*np.exp(-np.conjugate(B)*t) + np.conjugate(B)*np.exp(-B*t))))* np.exp(-gamma*t)*.5
+	return np.exp(- D**2 * dBa2 * ( nd*(1+np.exp(-2*kappa*t)) + .5*(3-np.exp(-2*kappa*t)) + 1j*(oma**2-3*kappa**2)*dBa2*np.sin(oma*t)*np.exp(-kappa*t) - np.exp(-kappa*t)*np.cos(oma*t)*(1+2*nd+1j*4*oma*kappa*dBa2) + 1j*oma/2/kappa*(1-np.exp(-2*kappa*t)) + 2*np.conjugate(B)*t + 2*kappa*dBa2*(-2*np.conjugate(B)+ B*np.exp(-np.conjugate(B)*t) + np.conjugate(B)*np.exp(-B*t))))* np.exp(-gamma*t)*.5
 #	return np.exp(-D**2*dBa2*(.5*(1-1j*oma/kappa)*(1-np.exp(-2*kappa*t))+1j*np.exp(-kappa*t)*np.sin(oma*t)-np.exp(-kappa*t)*np.cos(oma*t)-dBa2*(oma**2-3*kappa**2+2*kappa*(B*np.exp(-np.conjugate(B)*t)+np.conjugate(B)*np.exp(-B*t)))))*.5*np.exp(-gamma*t)
 
 def rho_damp_F(D, gamma, oma, kappa, nd, t):
@@ -32,7 +32,7 @@ def rho_damp_F(D, gamma, oma, kappa, nd, t):
 
 	return (1 + D**2*dBa2*( 1+np.exp(-2*kappa*t)-np.exp(-kappa*t)*2*np.cos(oma*t) )) * \
 	np.exp(- D**2 * dBa2 * ( .5*(3-np.exp(-2*kappa*t)) + 1j*(oma**2-3*kappa**2)*dBa2*np.sin(oma*t)*np.exp(-kappa*t) - \
-	np.exp(-kappa*t)*np.cos(oma*t)*1j*4*oma*kappa*dBa2 - 1j*oma/2/kappa*(1-np.exp(-2*kappa*t)) + 2*kappa*t + \
+	np.exp(-kappa*t)*np.cos(oma*t)*(1+1j*4*oma*kappa*dBa2) + 1j*oma/2/kappa*(1-np.exp(-2*kappa*t)) + 2*np.conjugate(B)*t + \
 	2*kappa*dBa2*(-2*np.conjugate(B)+ B*np.exp(-np.conjugate(B)*t) + np.conjugate(B)*np.exp(-B*t))))* np.exp(-gamma*t)*.5
 
 def rho_nodamp_T(D, gamma, oma,nd, t):
@@ -131,8 +131,8 @@ ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
 ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[2].set_ylabel('$|P(\omega)|^2$',fontsize=30)
 #ax[0].set_ylim(-0.01,.25)
-#ax[0].set_xlim(0,2000)
-ax[0].set_xlim(0,200)
+ax[0].set_xlim(0,2000)
+#ax[0].set_xlim(0,200)
 ax[1].set_xlim(-40,40)
 ax[1].set_ylim(10**(-8),10)
 #ax[2].set_ylim(10**(-4),10**4)
@@ -149,17 +149,17 @@ if show==True:
 else:
 	if damp==True:
 		if Fock==True:
-#			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock.png")
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock_s.png")
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock.png")
+#			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock_s.png")
 		else:
-#			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0.png")
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0_s.png")
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0.png")
+#			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0_s.png")
 	else:
 		if Fock==True:
-#			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock.png")
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock_s.png")
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock.png")
+#			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock_s.png")
 		else:
-#			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_T=0.png")
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_T=0_s.png")
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_T=0.png")
+#			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_T=0_s.png")
 
 

@@ -27,42 +27,28 @@ def rho_nodamp_T(D, gamma, oma,nd, t):
 def rho_nodamp_F(D, gamma, oma,nd, t):
 	return (1+D**2/oma**2*2*(1-np.cos(oma*t)))*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
 
-def rho_d(gd, gam, oma, kappa, nd, endt, Nt, k, therm, Fock):
+def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 
-	dt  = (endt)/(Nt-1)
-	dk  = k[1]-k[0]
-	c    = 0.003
-	g02  = kappa*2*c/np.pi
-	B    = 1j*oma + kappa
-	coef = np.abs(gd/B)**2
-	
 	#################
 	### |N_d^k|^2 ###
 	#################
 	def Nd2k(k,ex,Ca,Sa,Ck,Sk,Cak,Sak):
 
-		cof = coef*g02/(c*k)**2
-		den = 1/(kappa**2+(oma-c*k)**2)
-		A2  = (c*k)**2 * (2*Ca-ex) * ex
-		B2  = (kappa**2+oma**2) * (2*Ck-1)
-		AB  = oma*(Ck+(Ca-Cak)*ex) + kappa*(-Sk+(Sa-Sak)*ex)
+		A2  = 2*dc**2*(1-Ck)
+		B2  = dB * ( ex**2 + 1 - 2*Ca*ex )
+		AB  = -2*dc*dB*( kappa* ( (Sak-Sa)*ex+Sk ) + oma* ( (Cak-Ca)*ex-Ck+1 ) )
 
-		return cof * ( 1 - den*(A2 + B2 - 2*c*k*AB) )
+		return coef2 * ( A2 + B2 + AB )
 
 	def phif(k,ex,Ca,Sa,Ck,Sk,Cak,Sak):
 
-		den = 1/np.abs(B-1j*c*k)**2
-		Ck  = np.cos(c*k*t)
-		Sk  = np.sin(c*k*t)
-		dc  = 1/(c*k)
-		dB  = 1/np.abs(B)**2 
-		t1  = -dc**2*(c*k*t-Sk)
-		t2  = dB * ( dc*(kappa*Sk-oma*Ck-(kappa*Sa+oma*Ca)*ex) \
-			     +Sa*ex - oma/(2*kappa)*(1-ex) )
-		t3  = den*( dc * ( kappa+(kappa*Sak + (oma-c*k)*Cak)*ex ) +\
-			    dB * ( kappa*(2*oma-c*k)*(1-Cak*ex) - (kappa**2-oma*(oma-c*k))*Sak ) )
-		
-		return g02*gd**2*den * (t1+t2+t3)
+		Cc  = kappa*(1-Cak*ex)
+		t1  = -oma/(2*kappa) * dB * (1-ex**2)
+		t2  = dc*dB*( (kappa*Ca-(oma-c*k)*Sa)*ex - oma*Sk - kappa*Ck )
+		t3  = dB*den*( (2*oma-c*k)*Cc - (kappa**2-oma*(oma-c*k))*Sak*ex )
+		t4  = dc*den*(Cc+(oma-c*k)*Sak*ex) 
+		t5  = dc**2 * (Sk-c*k*t)
+		return coef2 * (t1+t2+t3+t4+t5)
 
 	nk = 1/(np.exp(therm*c*np.abs(k))-1)
 	
@@ -78,8 +64,8 @@ def rho_d(gd, gam, oma, kappa, nd, endt, Nt, k, therm, Fock):
 		Sa   = np.sin(oma*t)
 		Ck   = np.cos(c*k*t)
 		Sk   = np.sin(c*k*t)
-		Cak  = Ca*Ck+Sa*Sk
-		Sak  = Sa*Ck - Ca*Sk
+		Cak = Ca*Ck+Sa*Sk
+		Sak = Sa*Ck-Ca*Sk
 		Fg   = coef * ( Sa*ex + oma/(2*kappa)*(ex**2-1) )	
 		
 		gamma2  = coef * ( 1 + ex**2 - 2*ex*Ca ) #|gamma|^2
@@ -98,25 +84,30 @@ def rho_d(gd, gam, oma, kappa, nd, endt, Nt, k, therm, Fock):
 ##################	
 ### PARAMETERS ###
 ##################
-Fock   = False
+Fock   = True
 show   = False
 
-D      = .7
+gd     = .7
 oma    = 10 #in GHz
 kappav = np.array([0.0001,0.1,1])  #in GHz
 gam    = 0.001 #in GHz
 hbar   = 6.62607004 
 kb     = 1.38064852
-T      = 3000.#00001
+T      = 0.00001
+c      = 0.003
 nd     = 1./(np.exp(hbar*oma/kb/T)-1)
 endt   = 20000.
-Nt     = 2**14
+Nt     = 2**18
 t      = np.linspace(0,endt,Nt)
+dt     = (endt)/(Nt-1)
 endk   = 5000.
-Nk     = 10000
+Nk     = 20000
 ome    = 0.
 k      = np.linspace(-endk,endk,Nk)# + ome*100.
+dk     = k[1]-k[0]
+dc     = 1/(c*k)
 therm  = hbar/(kb*T)
+
 
 ################
 ### PLOTTING ###
@@ -137,9 +128,9 @@ linest = ['-','--','-.',':']
 fig,ax = plt.subplots(1,2,figsize=(25,8))
 
 if Fock==True:
-	rho_norm = rho_nodamp_F(D,gam,oma, nd,t)
+	rho_norm = rho_nodamp_F(gd,gam,oma, nd,t)
 else:
-	rho_norm = rho_nodamp_T(D,gam,oma, nd,t)
+	rho_norm = rho_nodamp_T(gd,gam,oma, nd,t)
 norm = np.abs(np.sum(rho_norm*2*endt/(Nt)))**2
 
 for i in range(0,kappav.size):
@@ -149,10 +140,17 @@ for i in range(0,kappav.size):
 	print("kappa is: ",kappav[i])
 	sys.stdout.flush()	
 
+	g02   = kappa*2*c/np.pi
+	B     = 1j*oma + kappa
+	den   = 1/(kappa**2+(oma-c*k)**2)
+	coef2 = g02*gd**2*den
+	dB    = 1/(kappa**2+oma**2)
+	coef  = gd**2*dB
+
 	#################################################
 	### EVALUATION OF THE TIME-DEPENDENT SOLUTION ###
 	#################################################
-	rho_wn=rho_d(D,gam,oma,kappa,nd,endt,Nt,k,therm,Fock)
+	rho_wn=rho_d(gd,gam,oma,kappa,nd,dt,Nt,k,dk,therm,Fock)
 	evol = rho_wn/np.sqrt(norm)
 	ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])
 	now2 = time.time()
@@ -192,7 +190,7 @@ ax[1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
 ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
 ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[0].set_ylim(-0.01,.25)
-ax[0].set_xlim(0,200)
+ax[0].set_xlim(0,2000)
 ax[1].set_ylim(10**(-8),10)
 ax[1].set_xlim(-40,40)
 
@@ -210,8 +208,8 @@ if show==True:
 	plt.show()
 else:
 	if Fock==True:
-		plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=0_Fock1_s.png")
+		plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=0_Fock1.png")
 	else:
-		plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=%d_wide_s.png" % T)
+		plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=%d_wide.png" % T)
 
 
