@@ -56,6 +56,10 @@ def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 	### EVALUATION FOR EACH TIMESTEP ###
 	####################################
 	rho_final = np.zeros(Nt, complex)
+	ksum_bn = np.zeros(Nt, complex)
+	ksum_bc = np.zeros(Nt, complex)
+	ksum_pn = np.zeros(Nt, complex)
+	ksum_pc = np.zeros(Nt, complex)
 	for it in range(0,Nt):
 
 		t    = it*dt#*2*np.pi
@@ -71,15 +75,22 @@ def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 		gamma2  = coef * ( 1 + ex**2 - 2*ex*Ca ) #|gamma|^2
 		
 		ksum_b = np.sum(Nd2k(k,ex,Ca,Sa,Ck,Sk,Cak,Sak)*(2*nk+1)*dk)
-		
+		ksum_bn[it] = ksum_b
+
 		ksum_p = np.sum(phif(k,ex,Ca,Sa,Ck,Sk,Cak,Sak)*dk)
+		ksum_pn[it] = ksum_p+Fg
 
 		if Fock==True:
 			rho_final[it] = .5 * (1+gamma2) * np.exp( - 0.5*(gamma2+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
 		else:
 			rho_final[it] = .5 * np.exp( - 0.5*(gamma2*(2*nd+1)+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
 
-	return rho_final
+		ksum_bc[it] = 2*gd**2/np.abs(B)**2*(2*kappa*t+(1-np.exp(-2*kappa*t))+2*kappa/np.abs(B)**2*(-2*kappa+np.conjugate(B)*np.exp(-B*t)+B*np.exp(-np.conjugate(B)*t)))
+		ksum_pc[it] = gd**2/(2*kappa*np.abs(B)**4)*( oma*( np.abs(B)**2*(1-4*kappa*t-np.exp(-2*kappa*t)) +\
+									8*kappa**2*(1-np.cos(oma*t)*np.exp(-kappa*t)) ) +\
+								2*kappa*np.sin(oma*t)*(oma**2-3*kappa**2)*np.exp(-kappa*t) )
+	return rho_final,ksum_bn-ksum_bc,ksum_pn-ksum_pc
+#	return rho_final,ksum_bn-ksum_bc,ksum_bc,ksum_pn-ksum_pc,ksum_pc
 
 ##################	
 ### PARAMETERS ###
@@ -96,12 +107,16 @@ kb     = 1.38064852
 T      = 0.00001
 c      = 0.003
 nd     = 1./(np.exp(hbar*oma/kb/T)-1)
-endt   = 20000.
+endt   = 6000.
+labet  = int(endt/1000.)
 Nt     = 2**18
+labNt  = int(np.log2(Nt))
 t      = np.linspace(0,endt,Nt)
 dt     = (endt)/(Nt-1)
-endk   = 5000.
-Nk     = 20000
+endk   = 9000.
+labek  = int(endk/1000.)
+Nk     = 55000
+labNk  = int(Nk/1000.)
 ome    = 0.
 k      = np.linspace(-endk,endk,Nk)# + ome*100.
 dk     = k[1]-k[0]
@@ -121,11 +136,13 @@ colors={'red':(241/255.,88/255.,84/255.),\
         'blue':(93/255,165/255.,218/255.),\
         'yellow':(222/255., 207/255., 63/255),\
         'black':(0.,0.,0.)}
-collab = ['green','orange','purple']
+collab = ['green','orange','purple','yellow']
 linew  = [3,2,2,4]
 linest = ['-','--','-.',':']
 
 fig,ax = plt.subplots(1,2,figsize=(25,8))
+fig2,ax2 = plt.subplots(kappav.size,2,figsize=(25,30))
+#fig3,ax3 = plt.subplots(kappav.size,2,figsize=(25,30))
 
 if Fock==True:
 	rho_norm = rho_nodamp_F(gd,gam,oma, nd,t)
@@ -150,9 +167,31 @@ for i in range(0,kappav.size):
 	#################################################
 	### EVALUATION OF THE TIME-DEPENDENT SOLUTION ###
 	#################################################
-	rho_wn=rho_d(gd,gam,oma,kappa,nd,dt,Nt,k,dk,therm,Fock)
+	rho_wn,ksum_b,ksum_p=rho_d(gd,gam,oma,kappa,nd,dt,Nt,k,dk,therm,Fock)
 	evol = rho_wn/np.sqrt(norm)
+	ax2[i,0].plot(t,ksum_b,color=colors[collab[i]],ls=linest[0],lw=linew[0],label="$\kappa=%.1f$" % kappa)
+	ax2[i,1].plot(t,ksum_p,color=colors[collab[i]],ls=linest[0],lw=linew[0],label="$\kappa=%.1f$" % kappa)
+	ax2[i,0].grid(True)
+	ax2[i,1].grid(True)
+	ax2[i,0].set_ylabel('$\Delta ksum_b$',fontsize=30)
+	ax2[i,1].set_ylabel('$\Delta ksum_p$',fontsize=30)
+	ax2[i,0].set_xlabel('$t$',fontsize=30)
+	ax2[i,1].set_xlabel('$t$',fontsize=30)
+	ax2[i,0].legend(fontsize=20)
+	ax2[i,1].legend(fontsize=20)
+
+#	ax3[i,0].plot(t,ksum_bc,color=colors[collab[i]],ls=linest[0],lw=linew[0],label="$\kappa=%.1f$" % kappa)
+#	ax3[i,1].plot(t,ksum_pc,color=colors[collab[i]],ls=linest[0],lw=linew[0],label="$\kappa=%.1f$" % kappa)
+#	ax3[i,0].grid(True)
+#	ax3[i,1].grid(True)
+#	ax3[i,0].set_ylabel('$ksum_b$',fontsize=30)
+#	ax3[i,1].set_ylabel('$ksum_p$',fontsize=30)
+#	ax3[i,0].set_xlabel('$t$',fontsize=30)
+#	ax3[i,1].set_xlabel('$t$',fontsize=30)
+#	ax3[i,0].legend(fontsize=20)
+#	ax3[i,1].legend(fontsize=20)
 	ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])
+
 	now2 = time.time()
 	nowh = int((now2-now)/3600.)
 	nowm = int((now2-now)/60.-nowh*60)
@@ -208,8 +247,12 @@ if show==True:
 	plt.show()
 else:
 	if Fock==True:
-		plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=0_Fock1.png")
+		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_T=0_Fock1.png" % (labek,labNk,labet,labNt))
+		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock1.png" % (labek,labNk,labet,labNt))
+#		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock1.png" % (labek,labNk,labet,labNt))
 	else:
-		plt.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend=5000_therm_T=%d_wide.png" % T)
+		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d_wide.png" % (labek,labNk,labet,labNt,T))
+		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d.png" % (labek,labNk,labet,labNt,T))
+#		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d.png" % (labek,labNk,labet,labNt,T))
 
 

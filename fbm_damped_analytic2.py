@@ -1,6 +1,6 @@
 #!/usr/bin/python3.4
 import matplotlib as mpl
-#mpl.use('Agg')
+mpl.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -45,7 +45,7 @@ def rho_nodamp_F(D, gamma, oma,nd, t):
 ### PARAMETERS ###
 ##################
 damp  = True
-Fock  = False
+Fock  = True
 show  = False
 T     = 0.00001
 
@@ -58,8 +58,8 @@ hbar  = 6.62607004
 kb    = 1.38064852
 nd    = 1./(np.exp(hbar*oma/kb/T)-1)
 
-endt  = 20000
-Nt    = 2**18
+endt  = 6000#20000
+Nt    = 2**16#8
 t     = np.linspace(0,endt, Nt)
 
 ################
