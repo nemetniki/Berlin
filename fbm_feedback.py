@@ -1,6 +1,6 @@
 #!/usr/bin/python3.4
 import matplotlib as mpl
-mpl.use('Agg')
+#mpl.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -96,20 +96,20 @@ def rho_fb(Nt, tau, dt, k, nk, nd, A, Ar, B, Br, D, Ck, kAB, Fock):
 ### PARAMETERS ###
 ##################
 Fock   = False
-show   = False
+show   = True
 #Trick  = False
 Tau    = True
 
 D      = .7
 oma    = 10 #in 100GHz
 ome    = 0.
-kappav = np.array([0.001,0.1,1])  #in 100GHz
+kappav = np.array([0.001,0.005,0.01])  #in 100GHz
 gam    = 0.001 #in 100GHz
 c      = 0.003
 
-endk   = 9000.
+endk   = 2000.
 labek  = int(endk/1000.)
-Numk   = 55000
+Numk   = 12000
 labNk  = int(Numk/1000.)
 k      = np.linspace(-endk,endk,Numk)# + ome*100.
 dk     = k[1]-k[0]
@@ -123,9 +123,9 @@ therm  = hbar/(kb*T)
 nde    = 2./(np.exp(therm*oma)-1) + 1.
 nke    = 2./(np.exp(therm*c*np.abs(k))-1) + 1.
 
-endt   = 6000.
+endt   = 750.
 labet  = int(endt/1000.)
-Nt     = 2**16
+Nt     = 2**13
 labNt  = int(np.log2(Nt))
 t      = np.linspace(0,endt,Nt)
 kaptau = 1.
@@ -213,8 +213,8 @@ for i in range(0,kappav.size):
 
 ax[0].grid(True)
 ax[1].grid(True)
-ax[0].legend([0.0001,0.1,1],fontsize=20)
-ax[1].legend([0.0001,0.1,1],fontsize=20)
+ax[0].legend([0.001,0.005,0.01],fontsize=20)
+ax[1].legend([0.001,0.005,0.01],fontsize=20)
 ax[0].set_xlabel('$t$ (10 ps)',fontsize=30)
 ax[1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
 ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
@@ -258,9 +258,9 @@ else:
 	if Tau==True:
 
 		if Fock==True:
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_tau=%.2f_Fock1_2.png" % (kaptau))
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_tau=%.2f_Fock1.png" % (kaptau))
 		else:
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_tau=%.2f_2.png" % (T,kaptau))
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_tau=%.2f.png" % (T,kaptau))
 	else:
 		if Fock==True:
 			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_notau_Fock1.png" % (labek,labNk,labet,labNt))
