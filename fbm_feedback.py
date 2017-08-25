@@ -1,6 +1,6 @@
 #!/usr/bin/python3.4
 import matplotlib as mpl
-#mpl.use('Agg')
+mpl.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -42,7 +42,7 @@ def rho_fb(Nt, tau, dt, k, nk, nd, A, Ar, B, Br, D, Ck, kAB, Fock):
 			nowh = int((now2-now)/3600.)
 			nowm = int((now2-now)/60.-nowh*60)
 			nows = int((now2-now)-nowh*3600-nowm*60)
-			print("M increased, now it is %d at %02d:%02d:%02d", (M,nowh, nowm, nows))
+			print("M increased, now it is %d at %02d:%02d:%02d" % (M,nowh, nowm, nows))
 			sys.stdout.flush()	
 
 		Nk = np.zeros(k.size,dtype=np.complex128)
@@ -95,21 +95,21 @@ def rho_fb(Nt, tau, dt, k, nk, nd, A, Ar, B, Br, D, Ck, kAB, Fock):
 ##################	
 ### PARAMETERS ###
 ##################
-Fock   = False
-show   = True
+Fock   = True
+show   = False
 #Trick  = False
 Tau    = True
 
 D      = .7
 oma    = 10 #in 100GHz
 ome    = 0.
-kappav = np.array([0.001,0.005,0.01])  #in 100GHz
+kappav = np.array([0.001,0.01,0.1])  #in 100GHz
 gam    = 0.001 #in 100GHz
 c      = 0.003
 
-endk   = 2000.
+endk   = 9000.
 labek  = int(endk/1000.)
-Numk   = 12000
+Numk   = 55000
 labNk  = int(Numk/1000.)
 k      = np.linspace(-endk,endk,Numk)# + ome*100.
 dk     = k[1]-k[0]
@@ -123,9 +123,9 @@ therm  = hbar/(kb*T)
 nde    = 2./(np.exp(therm*oma)-1) + 1.
 nke    = 2./(np.exp(therm*c*np.abs(k))-1) + 1.
 
-endt   = 750.
+endt   = 6000.
 labet  = int(endt/1000.)
-Nt     = 2**13
+Nt     = 2**18
 labNt  = int(np.log2(Nt))
 t      = np.linspace(0,endt,Nt)
 kaptau = 1.
@@ -157,20 +157,24 @@ else:
 	rho_norm = rho_nodamp_T(D,gam,oma, nde,t)
 norm = np.abs(np.sum(rho_norm*2*endt/(Nt)))**2
 
+kapt = np.zeros(3)
 for i in range(0,kappav.size):
 #for i in range(kappav.size-1,-1,-1):
 
 	kappa=kappav[i]
 	print("kappa is: ",kappa)
-	tau    = int(kaptau/kappa/dt)
-	print("tmax-tau is: ",endt-tau*dt)
+#	tau    = int(kaptau/kappa/dt)
+#	print("tmax-tau is: ",endt-tau*dt)
 	sys.stdout.flush()	
 
 	g0  = np.sqrt(kappa*2*c/np.pi)
 	if Tau==True:
+		tau = int(Nt/3.)
 		gk  = g0*np.sin(k*c*.5*tau*dt)
 	else:
+		tau = 2*Nt
 		gk  = g0
+	kapt[i] = kappa*tau*dt
 	B   = 1j*oma + kappa
 	Br  = 1/B
 	Ck  = -1j*gk*D/(A+B)
@@ -182,7 +186,8 @@ for i in range(0,kappav.size):
 	rho_wn=rho_fb(Nt,tau,dt,k,nke,nde,A,Ar,B,Br,D,Ck,kAB,Fock)
 	evol = rho_wn/np.sqrt(norm)
 
-	ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])
+#	ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])
+	ax[0].semilogy(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])
 	now2 = time.time()
 	nowh = int((now2-now)/3600.)
 	nowm = int((now2-now)/60.-nowh*60)
@@ -213,30 +218,34 @@ for i in range(0,kappav.size):
 
 ax[0].grid(True)
 ax[1].grid(True)
-ax[0].legend([0.001,0.005,0.01],fontsize=20)
-ax[1].legend([0.001,0.005,0.01],fontsize=20)
+ax[0].legend(["$\kappa=0.001,\kappa\\tau=%.2f$" % kapt[0],"$\kappa=0.01,\kappa\\tau=%.2f$" % kapt[1],"$\kappa=0.1,\kappa\\tau=%.2f$" % kapt[2]],fontsize=20)
+ax[1].legend(["$\kappa=0.001$","$\kappa=0.01$","$\kappa=0.1$"],fontsize=20)
 ax[0].set_xlabel('$t$ (10 ps)',fontsize=30)
 ax[1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
 ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
 ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[0].set_ylim(-0.01,.25)
-ax[0].set_xlim(0,400)
-ax[0].set_xlim(0,endt)
+if T>0.1:
+#	ax[0].set_xlim(0,200)
+	ax[0].set_xlim(0,endt)
+else:
+	ax[0].set_xlim(0,endt)
 
-#ax[1].set_ylim(10**(-8),10)
+ax[1].set_ylim(10**(-8),10)
 ax[1].set_xlim(-40,40)
 
 
 ##################
 ### TIMER ENDS ###
 ##################
-end=time.time()
-h = int((end-now)/3600.)
-m = int((end-now)/60.-h*60)
-s = int((end-now)-h*3600-m*60)
-print('%02d:%02d:%02d' %(h,m,s))
 
 if show==True:
+	end=time.time()
+	h = int((end-now)/3600.)
+	m = int((end-now)/60.-h*60)
+	s = int((end-now)-h*3600-m*60)
+	print('%02d:%02d:%02d' %(h,m,s))
+
 	plt.show()
 else:
 #	if Trick==True:
@@ -258,12 +267,21 @@ else:
 	if Tau==True:
 
 		if Fock==True:
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_tau=%.2f_Fock1.png" % (kaptau))
+#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_tau=%.2f_Fock1_3.png" % (kaptau))
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_tau=%.2f_Fock1_3_log.png" % (kaptau))
 		else:
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_tau=%.2f.png" % (T,kaptau))
+#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_tau=%.2f_3.png" % (T,kaptau))
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_tau=%.2f_3_log.png" % (T,kaptau))
 	else:
 		if Fock==True:
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_notau_Fock1.png" % (labek,labNk,labet,labNt))
+#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_notau_Fock1.png")
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_notau_Fock1_log.png")
 		else:
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_notau.png" % (labek,labNk,labet,labNt,T))
+#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_notau.png" % T)
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_notau_log.png" % T)
+	end=time.time()
+	h = int((end-now)/3600.)
+	m = int((end-now)/60.-h*60)
+	s = int((end-now)-h*3600-m*60)
+	print('%02d:%02d:%02d' %(h,m,s))
 

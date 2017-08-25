@@ -1,6 +1,6 @@
 #!/usr/bin/python3.4
 import matplotlib as mpl
-mpl.use('Agg')
+#mpl.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -30,112 +30,70 @@ def rho_nodamp_T(D, gamma, oma,nde, t):
 def rho_nodamp_F(D, gamma, oma,nde, t):
 	return (1+D**2/oma**2*2*(1-np.cos(oma*t)))*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
 
-@profile
+#@profile
+def f(m, tp, expA, expB):
+	res    = np.zeros(2*(1+k.size),dtype=np.complex128)
+	nv     = np.arange(0,m+1)
+	An     = np.array([A,]*(m+1)).transpose()
+	res[2:2+k.size]  = Ck * kAB**m * ( expA - expB * np.sum((An+B)**nv/factorial(nv)*tp**nv,axis=1) ) #Gk
+	An = None
+	res[1] = -D/B * kappa**m * ( expB * np.sum(tp**(m-nv)*Br**nv/factorial(m-nv)) - Br**m ) #gamma
+	nv = None
+	res[0] = D * expB * kappa**m / factorial(m) * tp**m # F
+	for n in range(0,m+1):
+		lv=np.arange(0,n+1)
+		if n==0:
+			LNkn  = expB-1
+		else:
+			LNkn += (A+B)**n * ( expB * np.sum(tp**(n-lv)*Br**lv/factorial(n-lv)) - Br**n )
+	res[2+k.size:] = Ck * kAB**m * ( Ar*(expA-1) + Br*LNkn ) # Nk
+	LNkn = None
+	return res
+
+#@profile
 def rho_fb(Nt, tau, dt, k, nke, nde, A, Ar, B, Br, D, Ck, kAB, Fock):
 
 	phi_env = np.zeros(Nt,dtype=np.complex128)
 	phi_cav = np.zeros(Nt,dtype=np.complex128)
 	rho_fin = np.zeros(Nt,dtype=np.complex128)
-	Phi     = np.zeros(tau)
 
-	for m in range(0,M+1):
+	for mp in range(0,M+1):
+		if mp==M and Nt>tau:
+			tmax = Nt-M*tau			
+		else:
+			tmax = min(tau,Nt)
+		for it in range(0,tmax):
 
-		looptime=time.time()
-		h       = int((looptime-start)/3600.)
-		mi      = int((looptime-start)/60.-h*60)
-		s       = int((looptime-start)-h*3600-mi*60)
-#		print("m is %d at %02d:%02d:%02d" % (m,h,mi,s))
-#		sys.stdout.flush()	
+			
+			for ms in range(0,mp+1):
+				tp   = ((mp-ms)*tau+it)*dt
+				
+				expA = np.exp(A*tp)
+				expB = np.exp(-B*tp)
 
-		tvec = np.linspace(0,(tau-1)*dt,tau)+m*tau*dt
-#		expB = np.exp(-B*tvec)
-		tsec   = np.array([tvec,]*k.size).transpose()
-#		Arv,expBv = np.meshgrid(Ar,np.expB)
-		nv    = np.arange(0,m+1)
-
-		expA      = np.exp(A*tsec)
+				if ms==0: #res: F,gamma,Gk,Nk
+					res = np.concatenate(( np.array([D * expB, -D * Br * ( expB - 1 )]),\
+								Ck * ( expA - expB ),\
+								Ck * ( Ar*(expA-1) + Br * (expB-1) ) ))
+				else:
+					res += f(ms, tp, expA, expB)
 		
-		for n in range(0,m+1):
+			phi_cav[mp*tau+it] = res[0] * np.conjugate(res[1])
+			phi_env[mp*tau+it] = np.sum( res[2:2+k.size] * np.conjugate(res[2+k.size:]) * dk)
 
-			if n==0:
-				L_Nk_n  = ( np.exp(-B*tsec)-1)
-				L_Gk_n  = np.ones(tsec.shape)+0*1j
-			else:
-				tsecl   =  np.array([ tvec,]*(n+1) ).transpose()
-				lv      = np.arange(0,n+1)
-				L_Nk_l  = np.array([np.sum( tsecl**(n-lv)*Br**lv/factorial(n-lv), axis=1),]*tsec.shape[1]).transpose()
-				lv      = None
-				tsecl   = None
-				L_Nk_n += (A+B)**n * ( np.exp(-B*tsec)*L_Nk_l - Br**n )
-				L_Gk_n += (A+B)**n / factorial(n) * tsec**n
+			Bath = -.5 * np.sum( np.abs(res[2+k.size:])**2 * nke * dk)
 
-		if m==0:				
-			Nk     = Ck * ( (expA-1)/A + Br * L_Nk_n )
-			L_Nk_n = None
-			Gk     = Ck*(expA- np.exp(-B*tsec))
-			expA = None
-			tsec = None
-			if m==M:
-				phi_env[(M*tau):Nt] = np.sum( Gk[0:(Nt-M*tau),:] * np.conjugate(Nk)[0:(Nt-M*tau),:] * dk, axis=1)
+			if Fock==True:
+				Cav_coef = np.complex_( 1. + np.abs(res[1])**2 )
+				Cav_exp  = np.complex_( -.5 * np.abs(res[1])**2 )
 			else:
-				phi_env[(m*tau):((m+1)*tau)] = np.sum( Gk * np.conjugate(Nk) * dk, axis=1)
-		else:
-			Nk    += Ck * ( kAB**m * ( Ar*(expA-1) + Br * L_Nk_n ) )
-			L_Nk_n = None
-			Gk    += Ck * kAB**m * ( expA -  np.exp(-B*tsec)*L_Gk_n )	
-			L_Gk_n = None
-			expA = None
-			tsec = None
-			if m==M:
-				phi_env[(M*tau):Nt] = np.sum( Gk[0:(Nt-M*tau),:] * np.conjugate(Nk)[0:(Nt-M*tau),:] * dk, axis=1)
-				Gk = None
-				kAB= None
-			else:
-				phi_env[(m*tau):((m+1)*tau)] = np.sum( Gk * np.conjugate(Nk) * dk, axis=1)
+				Cav_coef = np.complex_(1.)
+				Cav_exp = np.complex_( -.5 * np.abs(res[1])**2 * nde )
 
-		Bath = -.5 * np.sum( np.abs(Nk)**2 * nke * dk ,axis=1)
-		if m==M:
-			Nk = None					
+			res = None
 
-		if m==0:
-			ga     = -D*Br*( np.exp(-B*tvec)-1)
-			F      = D* np.exp(-B*tvec)
-			if m==M:
-				phi_cav[(M*tau):Nt] = F[0:(Nt-M*tau)] * np.conjugate(ga)[0:(Nt-M*tau)]
-			else:
-				phi_cav[(m*tau):((m+1)*tau)] = F * np.conjugate(ga)
-		else:
-			tsecn  = np.array([tvec,]*(m+1)).transpose()
-			ga    += -D*Br*kappa**m*( np.exp(-B*tvec)*np.sum(tsecn**(m-nv)*Br**nv/factorial(m-nv)) - Br**m )
-			tsecn  = None
-			F     += D*kappa**m/factorial(m)* np.exp(-B*tvec)*tvec**m
-			if m==M:
-				phi_cav[(M*tau):Nt] = F[0:(Nt-M*tau)] * np.conjugate(ga)[0:(Nt-M*tau)]
-				F = None	
-			else:
-				phi_cav[(m*tau):((m+1)*tau)] = F * np.conjugate(ga)
-	 
-		if Fock==True:
-			Cav_coef = np.complex_( 1. + np.abs(ga)**2 )
-			Cav_exp  = np.complex_( -.5 * np.abs(ga)**2 )
-		else:
-			Cav_coef = np.ones(ga.size)
-			Cav_exp = np.complex_( -.5 * np.abs(ga)**2 * nde )
-	
-	
-		if m==M:
-			ga = None
-			for it in range(0,(Nt-M*tau)):
-				Phi[it] = np.imag( np.sum( (phi_cav[0:(it+1+M*tau)] + phi_env[0:(it+1+M*tau)])*dt ) )
-			rho_fin[(M*tau):Nt] = .5 * Cav_coef[0:(Nt-M*tau)] * np.exp( Cav_exp[0:(Nt-M*tau)] + Bath[0:(Nt-M*tau)] - 1j*Phi[0:(Nt-M*tau)] - gam*np.arange((M*tau),Nt)*dt )
-			Bath                = None
-#			Phi                 = None
-		else:
-			for it in range(0,tau):
-				Phi[it] = np.imag( np.sum( (phi_cav[0:(it+1+m*tau)] + phi_env[0:(it+1+m*tau)])*dt ) )
-			rho_fin[(m*tau):((m+1)*tau)] = .5 * Cav_coef * np.exp( Cav_exp + Bath - 1j*Phi - gam*np.arange((m*tau),((m+1)*tau))*dt )
-			Bath                = None
-#			Phi                 = None
+			Phi = np.imag( np.sum( (phi_cav[0:(it+1+mp*tau)] + phi_env[0:(it+1+mp*tau)])*dt ) )
+			rho_fin[it+mp*tau] = .5 * Cav_coef * np.exp( Cav_exp + Bath - 1j*Phi- gam*(it+mp*tau)*dt )
 
 	return rho_fin
 		
@@ -144,7 +102,7 @@ def rho_fb(Nt, tau, dt, k, nke, nde, A, Ar, B, Br, D, Ck, kAB, Fock):
 ### PARAMETERS ###
 ##################
 Fock   = False
-show   = False
+show   = True
 #Trick  = False
 Tau    = True
 
@@ -155,9 +113,9 @@ kappav = np.array([0.001,0.005,0.01])  #in 100GHz
 gam    = 0.001 #in 100GHz
 c      = 0.003
 
-endk   = 2000#9000.
+endk   = 2000#900#0.
 labek  = int(endk/1000.)
-Numk   = 12000#55000
+Numk   = 12000#5500#0
 labNk  = int(Numk/1000.)
 k      = np.linspace(-endk,endk,Numk)# + ome*100.
 dk     = k[1]-k[0]
@@ -168,15 +126,15 @@ hbar   = 6.62607004
 kb     = 1.38064852
 T      = 0.00001
 therm  = hbar/(kb*T)
-hbar=None
-kb  =None
+hbar   = None
+kb     = None
 nde    = 2./(np.exp(therm*oma)-1) + 1.
 nke    = 2./(np.exp(therm*c*np.abs(k))-1) + 1.
 therm = None
 
-endt   = 1500.#6000.
+endt   = 750#600#0.
 labet  = int(endt/1000.)
-Nt     = 2**14#6
+Nt     = 2**13#6
 labNt  = int(np.log2(Nt))
 t      = np.linspace(0,endt,Nt)
 kaptau = 1.
@@ -224,9 +182,6 @@ for i in range(0,kappav.size):
 	B   = 1j*oma + kappa
 	Br  = 1/B
 	kAB = kappa/(A+B)
-#	tp1 = np.linspace(0,((M+1)*tau-1)*dt,(M+1)*tau)
-#	tpm = np.append(tp1,np.zeros((M+1)*tau-tp1.size)).reshape((M+1,tau))
-#	expB   = np.exp(-B*tpm)
 
 	g0  = np.sqrt(kappa*2*c/np.pi)
 	if Tau==True:
@@ -259,9 +214,6 @@ for i in range(0,kappav.size):
 	if i==kappav.size-1:
 		norm=None
 	freq = np.fft.fftshift(np.fft.fftfreq(Nt,(endt)/(Nt-1)))
-#	freq = freqr
-#	freqr=None
-
 
 	now3 = time.time()
 	nowh = int((now3-start)/3600.)
@@ -304,22 +256,6 @@ print('%02d:%02d:%02d' %(h,m,s))
 if show==True:
 	plt.show()
 else:
-#	if Trick==True:
-#
-#		if Fock==True:
-#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_tend%de_Nt2e%d_fb_T=0_Fock1_trick2.png" % (labek,labNk,labet,labNt))
-#			fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/Check_fb_k%de_%deNk_t%de_2e%dNt_T=0_Fock1_trick2.png" % (labek,labNk,labet,labNt))
-#		else:
-#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_tend%de_Nt2e%d_fb_T=%d_wide_trick2.png" % (labek,labNk,labet,labNt,T))
-#			fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/Check_fb_k%de_%deNk_t%de_2e%dNt_T=%d_wide_trick2.png" % (labek,labNk,labet,labNt,T))
-#	else:
-#		if Fock==True:
-#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_tend%de_Nt2e%d_fb_T=0_Fock1.png" % (labek,labNk,labet,labNt))
-#			fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/Check_fb_k%de_%deNk_t%de_2e%dNt_T=0_Fock1.png" % (labek,labNk,labet,labNt))
-#		else:
-#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_tend%de_Nt2e%d_fb_T=%d_wide.png" % (labek,labNk,labet,labNt,T))
-#			fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/Check_fb_k%de_%deNk_t%de_2e%dNt_T=%d_wide.png" % (labek,labNk,labet,labNt,T))
-
 	if Tau==True:
 
 		if Fock==True:

@@ -95,16 +95,16 @@ def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 ##################	
 ### PARAMETERS ###
 ##################
-Fock   = True
+Fock   = False
 show   = False
 
 gd     = .7
 oma    = 10 #in GHz
-kappav = np.array([0.0001,0.1,1])  #in GHz
+kappav = np.array([0.001,0.01,0.1])  #in GHz
 gam    = 0.001 #in GHz
 hbar   = 6.62607004 
 kb     = 1.38064852
-T      = 0.00001
+T      = 30.#00001
 c      = 0.003
 nd     = 1./(np.exp(hbar*oma/kb/T)-1)
 endt   = 6000.
@@ -222,14 +222,17 @@ for i in range(0,kappav.size):
 
 ax[0].grid(True)
 ax[1].grid(True)
-ax[0].legend([0.0001,0.1,1],fontsize=20)
-ax[1].legend([0.0001,0.1,1],fontsize=20)
+ax[0].legend([0.001,0.01,0.1],fontsize=20)
+ax[1].legend([0.001,0.01,0.1],fontsize=20)
 ax[0].set_xlabel('$t$ (10 ps)',fontsize=30)
 ax[1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
 ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
 ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[0].set_ylim(-0.01,.25)
-ax[0].set_xlim(0,2000)
+if T>.1:
+	ax[0].set_xlim(0,200)
+else:
+	ax[0].set_xlim(0,endt)
 ax[1].set_ylim(10**(-8),10)
 ax[1].set_xlim(-40,40)
 
