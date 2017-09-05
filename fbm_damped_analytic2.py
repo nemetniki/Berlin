@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import sys
+from scipy.misc import factorial
 
 mpl.rcParams['mathtext.fontset'] = 'cm'
 mpl.rcParams['mathtext.rm'] = 'serif'
@@ -25,12 +26,19 @@ def rho_damp_T(D, gamma, oma, kappa, nd, t):
 	return np.exp(- D**2 * dBa2 * ( nd*(1+np.exp(-2*kappa*t)) + .5*(3-np.exp(-2*kappa*t)) + 1j*(oma**2-3*kappa**2)*dBa2*np.sin(oma*t)*np.exp(-kappa*t) - np.exp(-kappa*t)*np.cos(oma*t)*(1+2*nd+1j*4*oma*kappa*dBa2) + 1j*oma/2/kappa*(1-np.exp(-2*kappa*t)) + 2*np.conjugate(B)*t + 2*kappa*dBa2*(-2*np.conjugate(B)+ B*np.exp(-np.conjugate(B)*t) + np.conjugate(B)*np.exp(-B*t))))* np.exp(-gamma*t)*.5
 #	return np.exp(-D**2*dBa2*(.5*(1-1j*oma/kappa)*(1-np.exp(-2*kappa*t))+1j*np.exp(-kappa*t)*np.sin(oma*t)-np.exp(-kappa*t)*np.cos(oma*t)-dBa2*(oma**2-3*kappa**2+2*kappa*(B*np.exp(-np.conjugate(B)*t)+np.conjugate(B)*np.exp(-B*t)))))*.5*np.exp(-gamma*t)
 
-def rho_damp_F(D, gamma, oma, kappa, nd, t):
+def rho_damp_F(D, gamma, oma, kappa, nd, t, NFock):
 	t    = t
 	B    = 1j*oma + kappa
 	dBa2 = 1/(oma**2 + kappa**2)
+	gam2 = D**2*dBa2*( 1+np.exp(-2*kappa*t)-np.exp(-kappa*t)*2*np.cos(oma*t) )
+	
+	cav_coef = 0.
+	for iF in range(0,NFock):
+		cav_coef += gam2**iF/( factorial(iF)**2*factorial(NFock-iF) )
+	cav_coef = cav_coef*factorial(NFock)
 
-	return (1 + D**2*dBa2*( 1+np.exp(-2*kappa*t)-np.exp(-kappa*t)*2*np.cos(oma*t) )) * \
+	#return (1 + D**2*dBa2*( 1+np.exp(-2*kappa*t)-np.exp(-kappa*t)*2*np.cos(oma*t) )) * \
+	return cav_coef * \
 	np.exp(- D**2 * dBa2 * ( .5*(3-np.exp(-2*kappa*t)) + 1j*(oma**2-3*kappa**2)*dBa2*np.sin(oma*t)*np.exp(-kappa*t) - \
 	np.exp(-kappa*t)*np.cos(oma*t)*(1+1j*4*oma*kappa*dBa2) + 1j*oma/2/kappa*(1-np.exp(-2*kappa*t)) + 2*np.conjugate(B)*t + \
 	2*kappa*dBa2*(-2*np.conjugate(B)+ B*np.exp(-np.conjugate(B)*t) + np.conjugate(B)*np.exp(-B*t))))* np.exp(-gamma*t)*.5
@@ -38,20 +46,26 @@ def rho_damp_F(D, gamma, oma, kappa, nd, t):
 def rho_nodamp_T(D, gamma, oma,nd, t):
 	return np.exp(-D**2/oma**2*((2*nd+1)*(1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t))*.5*np.exp(-gamma*t)
 
-def rho_nodamp_F(D, gamma, oma,nd, t):
-	return (1+D**2/oma**2*2*(1-np.cos(oma*t)))*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
+def rho_nodamp_F(D, gamma, oma,nd, t,NFock):
+	gam2 = D**2/oma**2*2*(1-np.cos(oma*t))
+	cav_coef = 0.
+	for iF in range(0,NFock):
+		cav_coef += gam2**iF/( factorial(iF)**2*factorial(NFock-iF) )
+	cav_coef = cav_coef*factorial(NFock)
+	return cav_coef*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
 
 ##################
 ### PARAMETERS ###
 ##################
 damp  = True
 Fock  = True
+NFock = 10
 show  = False
 T     = 0.00001
 
 D     = 0.7
-oma   = 10 #in GHz
-kappav = np.array([0.0001,0.1,1])  #in GHz
+oma   = np.pi/8.#10 #in GHz
+kappav = np.array([0.001,0.1,1])  #in GHz
 gamma = 0.001 #in GHz
 
 hbar  = 6.62607004
@@ -59,7 +73,7 @@ kb    = 1.38064852
 nd    = 1./(np.exp(hbar*oma/kb/T)-1)
 
 endt  = 6000#20000
-Nt    = 2**16#8
+Nt    = 2**18
 t     = np.linspace(0,endt, Nt)
 
 ################
@@ -82,9 +96,9 @@ linest = ['-','--','-.',':']
 fig,ax = plt.subplots(1,2,figsize=(25,8))
 
 if Fock==True:
-	rho_norm = rho_nodamp_F(D,gamma,oma, nd,t)
+	rho_norm = rho_nodamp_F(D,gamma,10, nd,t,NFock)
 else:
-	rho_norm = rho_nodamp_T(D,gamma,oma, nd,t)
+	rho_norm = rho_nodamp_T(D,gamma,10, nd,t)
 norm = np.abs(np.sum(rho_norm*2*endt/(Nt)))**2
 
 if damp==True:
@@ -94,7 +108,7 @@ if damp==True:
 		sys.stdout.flush()	
 		
 		if Fock==True:
-			rho_wn = rho_damp_F(D,gamma,oma, kappa,nd,t)
+			rho_wn = rho_damp_F(D,gamma,oma, kappa,nd,t,NFock)
 		else:
 			rho_wn = rho_damp_T(D,gamma,oma, kappa,nd,t)
 		evol   = rho_wn/np.sqrt(norm)
@@ -122,8 +136,8 @@ else:
 ax[0].grid(True)
 ax[1].grid(True)
 #ax[2].grid(True)
-ax[0].legend([0.0001,0.1,1],fontsize=20)
-ax[1].legend([0.0001,0.1,1],fontsize=20)
+ax[0].legend([0.001,0.1,1],fontsize=20)
+ax[1].legend([0.001,0.1,1],fontsize=20)
 ax[0].set_xlabel('$t$ (10 ps)',fontsize=30)
 ax[1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
 #ax[2].set_xlabel('Frequency',fontsize=30)
@@ -131,8 +145,8 @@ ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
 ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[2].set_ylabel('$|P(\omega)|^2$',fontsize=30)
 #ax[0].set_ylim(-0.01,.25)
-ax[0].set_xlim(0,2000)
-#ax[0].set_xlim(0,200)
+#ax[0].set_xlim(0,2000)
+ax[0].set_xlim(0,200)
 ax[1].set_xlim(-40,40)
 ax[1].set_ylim(10**(-8),10)
 #ax[2].set_ylim(10**(-4),10**4)
@@ -149,14 +163,14 @@ if show==True:
 else:
 	if damp==True:
 		if Fock==True:
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock.png")
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock%d.png" % NFock)
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock_s.png")
 		else:
 			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0.png")
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0_s.png")
 	else:
 		if Fock==True:
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock.png")
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock%d.png" % NFock)
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock_s.png")
 		else:
 			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_T=0.png")

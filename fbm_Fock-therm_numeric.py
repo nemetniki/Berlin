@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import time
 import sys
 from scipy.integrate import quad
+from scipy.misc import factorial
+
 
 mpl.rcParams['mathtext.fontset'] = 'cm'
 mpl.rcParams['mathtext.rm'] = 'serif'
@@ -24,8 +26,13 @@ now = time.time()
 def rho_nodamp_T(D, gamma, oma,nd, t):
 	return np.exp(-D**2/oma**2*((2*nd+1)*(1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t))*.5*np.exp(-gamma*t)
 
-def rho_nodamp_F(D, gamma, oma,nd, t):
-	return (1+D**2/oma**2*2*(1-np.cos(oma*t)))*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
+def rho_nodamp_F(D, gamma, oma,nd, t,NFock):
+	gam2 = D**2/oma**2*2*(1-np.cos(oma*t))
+	cav_coef = 0.
+	for iF in range(0,NFock):
+		cav_coef += gam2**iF/( factorial(iF)**2*factorial(NFock-iF) )
+	cav_coef = cav_coef*factorial(NFock)
+	return cav_coef*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
 
 def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 
@@ -81,7 +88,12 @@ def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 		ksum_pn[it] = ksum_p+Fg
 
 		if Fock==True:
-			rho_final[it] = .5 * (1+gamma2) * np.exp( - 0.5*(gamma2+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
+			Cav_coef = 0.
+			for iF in range(0,NFock+1):
+				Cav_coef += gamma2**iF / ( factorial(iF)**2 * factorial(NFock-iF) )
+			Cav_coef = factorial(NFock) * Cav_coef
+#			rho_final[it] = .5 * (1+gamma2) * np.exp( - 0.5*(gamma2+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
+			rho_final[it] = .5 * Cav_coef * np.exp( - 0.5*(gamma2+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
 		else:
 			rho_final[it] = .5 * np.exp( - 0.5*(gamma2*(2*nd+1)+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
 
@@ -95,7 +107,7 @@ def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 ##################	
 ### PARAMETERS ###
 ##################
-Fock   = False
+Fock   = True
 show   = False
 
 gd     = .7
@@ -104,7 +116,7 @@ kappav = np.array([0.001,0.01,0.1])  #in GHz
 gam    = 0.001 #in GHz
 hbar   = 6.62607004 
 kb     = 1.38064852
-T      = 30.#00001
+T      = 0.00001
 c      = 0.003
 nd     = 1./(np.exp(hbar*oma/kb/T)-1)
 endt   = 6000.
@@ -122,6 +134,7 @@ k      = np.linspace(-endk,endk,Nk)# + ome*100.
 dk     = k[1]-k[0]
 dc     = 1/(c*k)
 therm  = hbar/(kb*T)
+NFock = 10
 
 
 ################
@@ -145,7 +158,7 @@ fig2,ax2 = plt.subplots(kappav.size,2,figsize=(25,30))
 #fig3,ax3 = plt.subplots(kappav.size,2,figsize=(25,30))
 
 if Fock==True:
-	rho_norm = rho_nodamp_F(gd,gam,oma, nd,t)
+	rho_norm = rho_nodamp_F(gd,gam,oma, nd,t,NFock)
 else:
 	rho_norm = rho_nodamp_T(gd,gam,oma, nd,t)
 norm = np.abs(np.sum(rho_norm*2*endt/(Nt)))**2
@@ -250,8 +263,8 @@ if show==True:
 	plt.show()
 else:
 	if Fock==True:
-		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_T=0_Fock1.png" % (labek,labNk,labet,labNt))
-		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock1.png" % (labek,labNk,labet,labNt))
+		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_T=0_Fock%d.png" % (labek,labNk,labet,labNt,NFock))
+		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock%d.png" % (labek,labNk,labet,labNt,NFock))
 #		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock1.png" % (labek,labNk,labet,labNt))
 	else:
 		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d_wide.png" % (labek,labNk,labet,labNt,T))
