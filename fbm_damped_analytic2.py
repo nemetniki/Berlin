@@ -1,6 +1,6 @@
 #!/usr/bin/python3.4
 import matplotlib as mpl
-mpl.use('Agg')
+#mpl.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -33,7 +33,7 @@ def rho_damp_F(D, gamma, oma, kappa, nd, t, NFock):
 	gam2 = D**2*dBa2*( 1+np.exp(-2*kappa*t)-np.exp(-kappa*t)*2*np.cos(oma*t) )
 	
 	cav_coef = 0.
-	for iF in range(0,NFock):
+	for iF in range(0,NFock+1):
 		cav_coef += gam2**iF/( factorial(iF)**2*factorial(NFock-iF) )
 	cav_coef = cav_coef*factorial(NFock)
 
@@ -59,8 +59,8 @@ def rho_nodamp_F(D, gamma, oma,nd, t,NFock):
 ##################
 damp  = True
 Fock  = True
-NFock = 10
-show  = False
+NFock = 1
+show  = True
 T     = 0.00001
 
 D     = 0.7
@@ -147,8 +147,8 @@ ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[0].set_ylim(-0.01,.25)
 #ax[0].set_xlim(0,2000)
 ax[0].set_xlim(0,200)
-ax[1].set_xlim(-40,40)
-ax[1].set_ylim(10**(-8),10)
+ax[1].set_xlim(-10,10)
+#ax[1].set_ylim(10**(-8),10)
 #ax[2].set_ylim(10**(-4),10**4)
 
 ### TIMER ENDS ###

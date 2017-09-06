@@ -115,18 +115,18 @@ def rho_fb(Nt, tau, dt, k, nk, A, Ar, B, Br, D, Ck, kAB, Fock):
 ##################	
 ### PARAMETERS ###
 ##################
-Fock   = True
+Fock   = False
 show   = False
 #Trick  = False
 Tau    = True
-Change = "oma" # "tau", "kappa"
+Change = "tau" # "oma", "kappa"
 plottime = 500.
 
 D      = .7
 
 if Change == "tau":
-	oma    = np.pi/8. #in 100GHz
-	tauv   = np.arange(1,7)
+	oma    = 10.#np.pi/8. #in 100GHz
+	tauv   = np.array([4,8])
 	kappa  = 0.001
 elif Change == "oma":
 	#omav   = np.arange(1,4)*np.pi/(2.**5.)
@@ -155,7 +155,7 @@ kb     = 1.38064852
 T      = 0.00001
 therm  = hbar/(kb*T)
 nke    = 2./(np.exp(therm*c*np.abs(k))-1) + 1.
-NFock  = 10
+NFock  = 1
 
 endt   = 6000.
 labet  = int(endt/1000.)
@@ -183,8 +183,8 @@ linew  = [2.5,2.5,2.5,3,5]
 linest = ['-','--','-.',':',"-"]
 
 if Change == "tau":
-	row = 3
-	leng = 25
+	row = 1#3
+	leng = 8#25
 else:
 	row = 1
 	leng = 8
@@ -226,7 +226,7 @@ for i in range(0,endloop):
 	g0  = np.sqrt(kappa*2*c/np.pi)
 	if Tau==True:
 		if Change == "tau":
-			tau = int(Nt/12.)*tauv[i]
+			tau = int((600+0.05*tauv[i])*np.pi/dt)
 		else:
 			tau = int(Nt/3.)
 		gk  = g0*np.sin(k*c*.5*tau*dt)
@@ -234,14 +234,15 @@ for i in range(0,endloop):
 		tau = 2*Nt
 		gk  = g0
 	kapt = kappa*tau*dt
-	taulab = tau*dt/100.
+	taulab = tau*dt*10.
 	omt  = ( (oma*tau*dt) % (2*np.pi) ) / np.pi
-	print(oma*tau*dt)
+#	print(oma*tau*dt)
 	sys.stdout.flush()	
 	B   = 1j*oma + kappa
 	Br  = 1/B
 	Ck  = -1j*gk*D/(A+B)
 	kAB = kappa/(A+B)
+	print(omt)
 
 	#################################################
 	### EVALUATION OF THE TIME-DEPENDENT SOLUTION ###
@@ -255,18 +256,18 @@ for i in range(0,endloop):
 	if Change == "kappa":
 		ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[i], \
 			label="$\kappa\\tau$ =%.2f$" % (kapt) )
-	elif Change =="tau":
-		sti = i%2
-		if i == 0 or i == 3:
-			ax[0,0].plot(t,np.abs(rho_wn)**2,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti], \
-				label="$\omega_d\\tau$ mod$ (2\pi) =%.1f  \pi$" % (omt) )
-		elif i == 1 or i == 4:
-			ax[1,0].plot(t,np.abs(rho_wn)**2,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti], \
-				label="$\omega_d\\tau$ mod$ (2\pi) =%.1f  \pi$" % (omt) )
-		else:
-			ax[2,0].plot(t,np.abs(rho_wn)**2,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti], \
-				label="$\omega_d\\tau$ mod$ (2\pi) =%.1f  \pi$" % (omt) )
-	elif Change =="oma":
+#	elif Change =="tau":
+#		sti = i%2
+#		if i == 0 or i == 3:
+#			ax[0,0].plot(t,np.abs(rho_wn)**2,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti], \
+#				label="$\omega_d\\tau$ mod$ (2\pi) =%.1f  \pi$" % (omt) )
+#		elif i == 1 or i == 4:
+#			ax[1,0].plot(t,np.abs(rho_wn)**2,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti], \
+#				label="$\omega_d\\tau$ mod$ (2\pi) =%.1f  \pi$" % (omt) )
+#		else:
+#			ax[2,0].plot(t,np.abs(rho_wn)**2,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti], \
+#				label="$\omega_d\\tau$ mod$ (2\pi) =%.1f  \pi$" % (omt) )
+	elif Change =="oma" or Change=="tau":
 		ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[i], \
 			label="$\omega_d\\tau$ mod$ (2\pi) =%.1f  \pi$" % (omt) )
 #	ax[0].semilogy(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])
@@ -303,34 +304,35 @@ for i in range(0,endloop):
 	elif Change == "oma":
 		ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[i],label="$\omega_d=%d \\frac{\pi}{80}$ THz" % omlab )
 	elif Change == "tau":
-		if i == 0 or i == 3:
-			ax[0,1].semilogy(2*np.pi*freq,four.real,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti],label="$\\tau=%.0f$ ns" % taulab )
-		elif i == 1 or i == 4:
-			ax[1,1].semilogy(2*np.pi*freq,four.real,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti],label="$\\tau=%.0f$ ns" % taulab )
-		else:
-			ax[2,1].semilogy(2*np.pi*freq,four.real,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti],label="$\\tau=%.0f$ ns" % taulab )
+		ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[i],label="$\\tau=%.0f$ ps" % taulab )
+#		if i == 0 or i == 3:
+#			ax[0,1].semilogy(2*np.pi*freq,four.real,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti],label="$\\tau=%.0f$ ns" % taulab )
+#		elif i == 1 or i == 4:
+#			ax[1,1].semilogy(2*np.pi*freq,four.real,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti],label="$\\tau=%.0f$ ns" % taulab )
+#		else:
+#			ax[2,1].semilogy(2*np.pi*freq,four.real,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti],label="$\\tau=%.0f$ ns" % taulab )
 
-if Change == "tau":
-	for rowi in range(3):
-		for coli in range(2):
-			ax[rowi,coli].grid(True)
-			ax[rowi,coli].legend(fontsize=18,loc="best")
-		ax[rowi,0].set_xlabel('$t$ (10 ps)',fontsize=30)
-		ax[rowi,1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
-		ax[rowi,0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
-		ax[rowi,1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
-		ax[rowi,0].set_xlim(0,plottime)
-		ax[rowi,1].set_xlim(-40,40)
-else:
-	for coli in range(2):
-		ax[coli].grid(True)
-		ax[coli].legend(fontsize=18,loc="best")
-	ax[0].set_xlabel('$t$ (10 ps)',fontsize=30)
-	ax[1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
-	ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
-	ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
-	ax[0].set_xlim(0,plottime)
-	ax[1].set_xlim(-40,40)
+#if Change == "tau":
+#	for rowi in range(3):
+#		for coli in range(2):
+#			ax[rowi,coli].grid(True)
+#			ax[rowi,coli].legend(fontsize=18,loc="best")
+#		ax[rowi,0].set_xlabel('$t$ (10 ps)',fontsize=30)
+#		ax[rowi,1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
+#		ax[rowi,0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
+#		ax[rowi,1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
+#		ax[rowi,0].set_xlim(0,plottime)
+#		ax[rowi,1].set_xlim(-40,40)
+#else:
+for coli in range(2):
+	ax[coli].grid(True)
+	ax[coli].legend(fontsize=18,loc="best")
+ax[0].set_xlabel('$t$ (10 ps)',fontsize=30)
+ax[1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
+ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
+ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
+ax[0].set_xlim(0,plottime)
+ax[1].set_xlim(-40,40)
 #ax[0].set_ylim(-0.01,.25)
 
 ##################
@@ -373,11 +375,11 @@ else:
 				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_oma=%d_tau=%d_Fock%d.png" % (oma,tau*dt,NFock))
 		else:
 			if Change == "tau":
-				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_omtp10=%d.png" % (omt*10))
+				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_omtp10=%d.png" % (T,omt*10))
 			elif Change == "oma":
-				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_kaptau=%d_tau=%d.png" % (kapt,tau*dt))
+				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_kaptau=%d_tau=%d.png" % (T,kapt,tau*dt))
 			elif Change == "kappa":
-				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_oma=%d_tau=%d.png" % (oma,tau*dt))
+				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_oma=%d_tau=%d.png" % (T,oma,tau*dt))
 	else:
 		if Fock==True:
 			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_notau_Fock%d.png" % NFock)

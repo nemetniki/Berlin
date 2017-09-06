@@ -23,10 +23,11 @@ now = time.time()
 ###############################
 ### TIME-DEPENDENT FUNCTION ###
 ###############################
-def rho_nodamp_T(D, gamma, oma,nd, t):
-	return np.exp(-D**2/oma**2*((2*nd+1)*(1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t))*.5*np.exp(-gamma*t)
+### For norm ###
+def rho_nodamp_T(D, gamma, oma, t):
+	return np.exp(-D**2/oma**2*(nde*(1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t))*.5*np.exp(-gamma*t)
 
-def rho_nodamp_F(D, gamma, oma,nd, t,NFock):
+def rho_nodamp_F(D, gamma, oma, t,NFock):
 	gam2 = D**2/oma**2*2*(1-np.cos(oma*t))
 	cav_coef = 0.
 	for iF in range(0,NFock):
@@ -107,11 +108,11 @@ def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 ##################	
 ### PARAMETERS ###
 ##################
-Fock   = True
+Fock   = False
 show   = False
 
 gd     = .7
-oma    = 10 #in GHz
+oma    = np.pi/8. #in GHz
 kappav = np.array([0.001,0.01,0.1])  #in GHz
 gam    = 0.001 #in GHz
 hbar   = 6.62607004 
@@ -134,7 +135,7 @@ k      = np.linspace(-endk,endk,Nk)# + ome*100.
 dk     = k[1]-k[0]
 dc     = 1/(c*k)
 therm  = hbar/(kb*T)
-NFock = 10
+NFock = 3
 
 
 ################
@@ -157,10 +158,12 @@ fig,ax = plt.subplots(1,2,figsize=(25,8))
 fig2,ax2 = plt.subplots(kappav.size,2,figsize=(25,30))
 #fig3,ax3 = plt.subplots(kappav.size,2,figsize=(25,30))
 
+# Determining the norm
 if Fock==True:
-	rho_norm = rho_nodamp_F(gd,gam,oma, nd,t,NFock)
+	rho_norm = rho_nodamp_F(gd,gam,10,t,NFock)
 else:
-	rho_norm = rho_nodamp_T(gd,gam,oma, nd,t)
+	nde    = 2./(np.exp(therm*10)-1) + 1.
+	rho_norm = rho_nodamp_T(gd,gam,10,t)
 norm = np.abs(np.sum(rho_norm*2*endt/(Nt)))**2
 
 for i in range(0,kappav.size):
@@ -245,7 +248,7 @@ ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 if T>.1:
 	ax[0].set_xlim(0,200)
 else:
-	ax[0].set_xlim(0,endt)
+	ax[0].set_xlim(0,200)#endt)
 ax[1].set_ylim(10**(-8),10)
 ax[1].set_xlim(-40,40)
 
@@ -263,8 +266,8 @@ if show==True:
 	plt.show()
 else:
 	if Fock==True:
-		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_T=0_Fock%d.png" % (labek,labNk,labet,labNt,NFock))
-		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock%d.png" % (labek,labNk,labet,labNt,NFock))
+		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_T=0_Fock%d_diffom.png" % (labek,labNk,labet,labNt,NFock))
+		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock%d_diffom.png" % (labek,labNk,labet,labNt,NFock))
 #		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock1.png" % (labek,labNk,labet,labNt))
 	else:
 		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d_wide.png" % (labek,labNk,labet,labNt,T))
