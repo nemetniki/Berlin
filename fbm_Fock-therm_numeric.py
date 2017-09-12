@@ -31,7 +31,7 @@ def rho_nodamp_F(D, gamma, oma, t,NFock):
 	gam2 = D**2/oma**2*2*(1-np.cos(oma*t))
 	cav_coef = 0.
 	for iF in range(0,NFock):
-		cav_coef += gam2**iF/( factorial(iF)**2*factorial(NFock-iF) )
+		cav_coef += (-gam2)**iF/( factorial(iF)**2*factorial(NFock-iF) )
 	cav_coef = cav_coef*factorial(NFock)
 	return cav_coef*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
 
@@ -91,7 +91,7 @@ def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 		if Fock==True:
 			Cav_coef = 0.
 			for iF in range(0,NFock+1):
-				Cav_coef += gamma2**iF / ( factorial(iF)**2 * factorial(NFock-iF) )
+				Cav_coef += (-gamma2)**iF / ( factorial(iF)**2 * factorial(NFock-iF) )
 			Cav_coef = factorial(NFock) * Cav_coef
 #			rho_final[it] = .5 * (1+gamma2) * np.exp( - 0.5*(gamma2+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
 			rho_final[it] = .5 * Cav_coef * np.exp( - 0.5*(gamma2+ksum_b) - 1j * (ksum_p+Fg) - 1j*ome*t - gam*t)
@@ -112,8 +112,9 @@ Fock   = False
 show   = False
 
 gd     = .7
-oma    = np.pi/8. #in GHz
-kappav = np.array([0.001,0.01,0.1])  #in GHz
+oma    = 10.#np.pi/8. #in GHz
+kappav = np.array([0.1,0.2,0.5])  #in GHz
+#kappav = np.array([0.001,0.1,1])  #in GHz
 gam    = 0.001 #in GHz
 hbar   = 6.62607004 
 kb     = 1.38064852
@@ -135,7 +136,7 @@ k      = np.linspace(-endk,endk,Nk)# + ome*100.
 dk     = k[1]-k[0]
 dc     = 1/(c*k)
 therm  = hbar/(kb*T)
-NFock = 3
+NFock = 10
 
 
 ################
@@ -185,8 +186,8 @@ for i in range(0,kappav.size):
 	#################################################
 	rho_wn,ksum_b,ksum_p=rho_d(gd,gam,oma,kappa,nd,dt,Nt,k,dk,therm,Fock)
 	evol = rho_wn/np.sqrt(norm)
-	ax2[i,0].plot(t,ksum_b,color=colors[collab[i]],ls=linest[0],lw=linew[0],label="$\kappa=%.1f$" % kappa)
-	ax2[i,1].plot(t,ksum_p,color=colors[collab[i]],ls=linest[0],lw=linew[0],label="$\kappa=%.1f$" % kappa)
+	ax2[i,0].plot(t,ksum_b,color=colors[collab[i]],ls=linest[0],lw=linew[0],label="$\kappa=%.3f$" % kappa)
+	ax2[i,1].plot(t,ksum_p,color=colors[collab[i]],ls=linest[0],lw=linew[0],label="$\kappa=%.3f$" % kappa)
 	ax2[i,0].grid(True)
 	ax2[i,1].grid(True)
 	ax2[i,0].set_ylabel('$\Delta ksum_b$',fontsize=30)
@@ -206,7 +207,7 @@ for i in range(0,kappav.size):
 #	ax3[i,1].set_xlabel('$t$',fontsize=30)
 #	ax3[i,0].legend(fontsize=20)
 #	ax3[i,1].legend(fontsize=20)
-	ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])
+	ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[i]],ls=linest[i],lw=linew[0],label="$\kappa=%.3f$" % kappa)
 
 	now2 = time.time()
 	nowh = int((now2-now)/3600.)
@@ -233,23 +234,25 @@ for i in range(0,kappav.size):
 	############
 	### PLOT ###
 	############
-	ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0])
+	ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0],label="$\kappa=%.3f$" % kappa)
 	ax[1].grid(True)
 
 ax[0].grid(True)
 ax[1].grid(True)
-ax[0].legend([0.001,0.01,0.1],fontsize=20)
-ax[1].legend([0.001,0.01,0.1],fontsize=20)
+ax[0].legend(fontsize=20)
+ax[1].legend(fontsize=20)
+#ax[0].legend([0.001,0.01,0.1],fontsize=20)
+#ax[1].legend([0.001,0.01,0.1],fontsize=20)
 ax[0].set_xlabel('$t$ (10 ps)',fontsize=30)
 ax[1].set_xlabel('$\omega$ (100 GHz)',fontsize=30)
 ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
 ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[0].set_ylim(-0.01,.25)
 if T>.1:
-	ax[0].set_xlim(0,200)
+	ax[0].set_xlim(0,500)
 else:
-	ax[0].set_xlim(0,200)#endt)
-ax[1].set_ylim(10**(-8),10)
+	ax[0].set_xlim(0,500)#endt)
+ax[1].set_ylim(10**(-8),1)
 ax[1].set_xlim(-40,40)
 
 
@@ -266,12 +269,12 @@ if show==True:
 	plt.show()
 else:
 	if Fock==True:
-		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_T=0_Fock%d_diffom.png" % (labek,labNk,labet,labNt,NFock))
-		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock%d_diffom.png" % (labek,labNk,labet,labNt,NFock))
+		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_T=0_Fock%d.png" % (labek,labNk,labet,labNt,NFock))
+		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock%d.png" % (labek,labNk,labet,labNt,NFock))
 #		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock1.png" % (labek,labNk,labet,labNt))
 	else:
-		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d_wide.png" % (labek,labNk,labet,labNt,T))
-		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d.png" % (labek,labNk,labet,labNt,T))
+		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d_kapmask.png" % (labek,labNk,labet,labNt,T))
+		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d_kapmask.png" % (labek,labNk,labet,labNt,T))
 #		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d.png" % (labek,labNk,labet,labNt,T))
 
 

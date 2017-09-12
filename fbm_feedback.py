@@ -30,7 +30,7 @@ def rho_nodamp_F(D, gamma, oma, t,NFock):
 	gam2 = D**2/oma**2*2*(1-np.cos(oma*t))
 	cav_coef = 0.
 	for iF in range(0,NFock):
-		cav_coef += gam2**iF/( factorial(iF)**2*factorial(NFock-iF) )
+		cav_coef += (-gam2)**iF/( factorial(iF)**2*factorial(NFock-iF) )
 	cav_coef = cav_coef*factorial(NFock)
 	return cav_coef*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
 
@@ -90,7 +90,7 @@ def rho_fb(Nt, tau, dt, k, nk, A, Ar, B, Br, D, Ck, kAB, Fock):
 		if Fock==True:
 			Cav_coef = 0. # it is important to reset this coefficient each time step
 			for iF in range(0,NFock+1):
-				Cav_coef += ga2**iF / ( factorial(iF)**2 * factorial(NFock-iF) )
+				Cav_coef += (-ga2)**iF / ( factorial(iF)**2 * factorial(NFock-iF) )
 			Cav_coef = factorial(NFock) * Cav_coef
 #			Cav_coef = np.complex_( 1. + np.abs(ga)**2 )
 			Cav_exp  = np.complex_( -.5 * ga2 )
@@ -126,11 +126,15 @@ D      = .7
 
 if Change == "tau":
 	oma    = 10.#np.pi/8. #in 100GHz
-	tauv   = np.array([4,8])
-	kappa  = 0.001
+	tauv   = np.array([1.,2.])
+#	tauv   = np.array([.1,1.,10.])
+#	tauv   = np.array([50,100,150,200])
+	kappa  = 0.3
+#	kappa  = 0.001
 elif Change == "oma":
 	#omav   = np.arange(1,4)*np.pi/(2.**5.)
-	omav   = np.array([2,5])*np.pi/(2.**5.)
+#	omav   = np.array([2,5])*np.pi/(2.**5.)
+	omav   = (4+0.5*np.array([1,5]))*np.pi
 #	omav   = np.arange(4,6)*np.pi/(2.**5.)
 	kappa  = 0.001
 elif Change == "kappa":
@@ -152,10 +156,10 @@ Ar     = 1/A
 
 hbar   = 6.62607004 
 kb     = 1.38064852
-T      = 0.00001
+T      = 300.#00001
 therm  = hbar/(kb*T)
 nke    = 2./(np.exp(therm*c*np.abs(k))-1) + 1.
-NFock  = 1
+NFock  = 10
 
 endt   = 6000.
 labet  = int(endt/1000.)
@@ -200,23 +204,26 @@ else:
 	rho_norm = rho_nodamp_T(D,gam,10,t)
 norm = np.abs(np.sum(rho_norm*2*endt/(Nt)))**2
 
-if Change == "oma":
-	endloop = omav.size
-elif Change == "tau":
-	endloop = tauv.size
-elif Change == "kappa":
-	endloop = kappav.size
+if Tau==True:
+	if Change == "oma":
+		endloop = omav.size
+	elif Change == "tau":
+		endloop = tauv.size
+	elif Change == "kappa":
+		endloop = kappav.size
+	else:
+		print("What should I iterate over?")
 else:
-	print("What should I iterate over?")
+	endloop = 1
 
 for i in range(0,endloop):
 
 	if Change == "oma":
 		oma = omav[i]
-		omlab = 8*oma/np.pi
-		print("om_a is %.2f * pi" % omlab)
+#		omlab = 8*oma/np.pi
+		omlab = oma/np.pi
+		print("om_a is %.1f * pi" % omlab)
 	elif Change == "kappa":
-		endloop == kappav.size
 		kappa=kappav[i]
 		kaplab = kappa*100.
 		print("kappa is: ",kappa)
@@ -227,15 +234,18 @@ for i in range(0,endloop):
 	if Tau==True:
 		if Change == "tau":
 			tau = int((600+0.05*tauv[i])*np.pi/dt)
+#			tau = int(500./dt*tauv[i])
+#			tau = int(1/(2*np.pi*tauv[i])/dt)
 		else:
-			tau = int(Nt/3.)
+			tau=int(2001./dt)			
+#			tau = int(Nt/3.)
 		gk  = g0*np.sin(k*c*.5*tau*dt)
 	else:
 		tau = 2*Nt
 		gk  = g0
+	omt  = ( (oma*tau*dt) % (2*np.pi) ) / np.pi
 	kapt = kappa*tau*dt
 	taulab = tau*dt*10.
-	omt  = ( (oma*tau*dt) % (2*np.pi) ) / np.pi
 #	print(oma*tau*dt)
 	sys.stdout.flush()	
 	B   = 1j*oma + kappa
@@ -304,7 +314,7 @@ for i in range(0,endloop):
 	elif Change == "oma":
 		ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[i],label="$\omega_d=%d \\frac{\pi}{80}$ THz" % omlab )
 	elif Change == "tau":
-		ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[i],label="$\\tau=%.0f$ ps" % taulab )
+		ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[i],label="$\kappa\\tau=%.2f$" % kapt )
 #		if i == 0 or i == 3:
 #			ax[0,1].semilogy(2*np.pi*freq,four.real,color=colors[collab[sti]],ls=linest[sti],lw=linew[sti],label="$\\tau=%.0f$ ns" % taulab )
 #		elif i == 1 or i == 4:
@@ -333,7 +343,7 @@ ax[0].set_ylabel('$\left|P(t)\\right|^2$',fontsize=30)
 ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 ax[0].set_xlim(0,plottime)
 ax[1].set_xlim(-40,40)
-#ax[0].set_ylim(-0.01,.25)
+ax[1].set_ylim(10**(-8),1)
 
 ##################
 ### TIMER ENDS ###
@@ -368,24 +378,30 @@ else:
 
 		if Fock==True:
 			if Change == "tau":
-				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_omtp10=%d_Fock%d.png" % (omt*10,NFock))
+				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=10/num_fb_T=%d_omtp10=%d_ktau=%d_comp.png" % (NFock,T,omt*10,kapt))
+#				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=pip8/num_fb_T=%d_omtp10=%d_ktau=%d.png" % (NFock,T,omt*10,kapt))
 			elif Change == "oma":
-				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_kaptau=%d_tau=%d_Fock%d_comp.png" % (kapt,tau*dt,NFock))
+				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/tau=2001/num_fb_T=%d_omtp10=%d_ktau=%d.png" % (NFock,T,omt*10,kapt))
 			elif Change == "kappa":
-				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_oma=%d_tau=%d_Fock%d.png" % (oma,tau*dt,NFock))
+#				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=10/num_fb_T=%d_tau=%d_omtp=%d.png" % (NFock,T,tau*dt,omt*10))
+				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=pip8/num_fb_T=%d_tau=%d_omtp=%d.png" % (NFock,T,tau*dt,omt*10))
 		else:
 			if Change == "tau":
-				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_omtp10=%d.png" % (T,omt*10))
+				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/oma=10/num_fb_omtp10=%d_ktau=%d.png" % (T,omt*10,kapt))
+#				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/oma=pip8/num_fb_omtp10=%d_ktau=%d.png" % (T,omt*10,kapt))
 			elif Change == "oma":
-				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_kaptau=%d_tau=%d.png" % (T,kapt,tau*dt))
+				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/tau=2001/num_fb_omtp10=%d_ktau=%d.png" % (T,omt*10,kapt))
 			elif Change == "kappa":
-				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_oma=%d_tau=%d.png" % (T,oma,tau*dt))
+				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/oma=10/num_fb_tau=%d_omtp%d.png" % (T,tau*dt,omt*10))
 	else:
 		if Fock==True:
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_notau_Fock%d.png" % NFock)
+#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=10/num_fb_T=%d_notau.png" % (NFock,T))
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=pip8/num_fb_T=%d_notau.png" % (NFock,T))
+#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/tau=2001/num_fb_T=%d_notau_om%d.png" % (NFock,T,omlab*10))
 #			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_notau_Fock1_log.png")
 		else:
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_notau.png" % T)
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/oma=10/num_fb_notau_kap=%d.png" % (T,kappa*10))
+#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/tau=2001/num_fb_notau_om%d.png" % (T,omlab*10))
 #			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_notau_log.png" % T)
 	end=time.time()
 	h = int((end-now)/3600.)

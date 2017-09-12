@@ -1,6 +1,6 @@
 #!/usr/bin/python3.4
 import matplotlib as mpl
-#mpl.use('Agg')
+mpl.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -34,7 +34,7 @@ def rho_damp_F(D, gamma, oma, kappa, nd, t, NFock):
 	
 	cav_coef = 0.
 	for iF in range(0,NFock+1):
-		cav_coef += gam2**iF/( factorial(iF)**2*factorial(NFock-iF) )
+		cav_coef += (-gam2)**iF/( factorial(iF)**2*factorial(NFock-iF) )
 	cav_coef = cav_coef*factorial(NFock)
 
 	#return (1 + D**2*dBa2*( 1+np.exp(-2*kappa*t)-np.exp(-kappa*t)*2*np.cos(oma*t) )) * \
@@ -49,8 +49,8 @@ def rho_nodamp_T(D, gamma, oma,nd, t):
 def rho_nodamp_F(D, gamma, oma,nd, t,NFock):
 	gam2 = D**2/oma**2*2*(1-np.cos(oma*t))
 	cav_coef = 0.
-	for iF in range(0,NFock):
-		cav_coef += gam2**iF/( factorial(iF)**2*factorial(NFock-iF) )
+	for iF in range(0,NFock+1):
+		cav_coef += (-gam2)**iF/( factorial(iF)**2*factorial(NFock-iF) )
 	cav_coef = cav_coef*factorial(NFock)
 	return cav_coef*np.exp(-D**2/oma**2*( (1-np.cos(oma*t))+1j*np.sin(oma*t)-1j*oma*t) )*.5*np.exp(-gamma*t)
 
@@ -59,8 +59,8 @@ def rho_nodamp_F(D, gamma, oma,nd, t,NFock):
 ##################
 damp  = True
 Fock  = True
-NFock = 1
-show  = True
+NFock = 10
+show  = False
 T     = 0.00001
 
 D     = 0.7
@@ -97,8 +97,10 @@ fig,ax = plt.subplots(1,2,figsize=(25,8))
 
 if Fock==True:
 	rho_norm = rho_nodamp_F(D,gamma,10, nd,t,NFock)
+	print("Fock")
 else:
 	rho_norm = rho_nodamp_T(D,gamma,10, nd,t)
+	print("no Fock")
 norm = np.abs(np.sum(rho_norm*2*endt/(Nt)))**2
 
 if damp==True:
@@ -123,10 +125,14 @@ if damp==True:
 	#	ax[1].semilogy(freq,four.imag,color=colors[collab[i]],ls=linest[i],lw=linew[0])#,freq,four.imag)
 	#	ax[2].semilogy(freq,four.real**2+four.imag**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])#,freq,four.imag)
 else:
-#rho_wn = rho_nodamp(D,gamma,oma,nd,t)
+	if Fock==True:
+		rho_wn = rho_nodamp_F(D,gamma,oma,nd,t,NFock)
+	else:
+		rho_wn = rho_nodamp_T(D,gamma,oma,nd,t,)
+
 #norm = np.abs(np.sum(rho_wn*2*endt/(Nt)))**2
-	evol   = rho_norm/np.sqrt(norm)
-	ax[0].plot(t,np.abs(rho_norm)**2,color=colors[collab[0]],ls=linest[0],lw=linew[0])
+	evol   = rho_wn/np.sqrt(norm)
+	ax[0].plot(t,np.abs(rho_wn)**2,color=colors[collab[0]],ls=linest[0],lw=linew[0])
 	fourr = np.fft.fft(evol)
 	four = np.fft.fftshift(fourr)*2/(Nt)*endt/np.sqrt(norm)
 	freqr = np.fft.fftfreq(t.size,endt/(Nt-1))
@@ -146,9 +152,9 @@ ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[2].set_ylabel('$|P(\omega)|^2$',fontsize=30)
 #ax[0].set_ylim(-0.01,.25)
 #ax[0].set_xlim(0,2000)
-ax[0].set_xlim(0,200)
-ax[1].set_xlim(-10,10)
-#ax[1].set_ylim(10**(-8),10)
+ax[0].set_xlim(0,500)
+ax[1].set_xlim(-40,40)
+ax[1].set_ylim(10**(-8),1)
 #ax[2].set_ylim(10**(-4),10**4)
 
 ### TIMER ENDS ###
@@ -163,14 +169,14 @@ if show==True:
 else:
 	if damp==True:
 		if Fock==True:
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock%d.png" % NFock)
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock%d_diffom.png" % NFock)
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock_s.png")
 		else:
 			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0.png")
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0_s.png")
 	else:
 		if Fock==True:
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock%d.png" % NFock)
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock%d_diffom.png" % NFock)
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock_s.png")
 		else:
 			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_T=0.png")
