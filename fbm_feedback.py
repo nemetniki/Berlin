@@ -115,7 +115,7 @@ def rho_fb(Nt, tau, dt, k, nk, A, Ar, B, Br, D, Ck, kAB, Fock):
 ##################	
 ### PARAMETERS ###
 ##################
-Fock   = False
+Fock   = True
 show   = False
 #Trick  = False
 Tau    = True
@@ -126,10 +126,10 @@ D      = .7
 
 if Change == "tau":
 	oma    = 10.#np.pi/8. #in 100GHz
-	tauv   = np.array([1.,2.])
+	tauv   = np.array([1.,2.,3.,4.])
 #	tauv   = np.array([.1,1.,10.])
 #	tauv   = np.array([50,100,150,200])
-	kappa  = 0.3
+	kappa  = 0.2
 #	kappa  = 0.001
 elif Change == "oma":
 	#omav   = np.arange(1,4)*np.pi/(2.**5.)
@@ -145,9 +145,9 @@ ome    = 0.
 gam    = 0.001 #in 100GHz
 c      = 0.003
 
-endk   = 9000.
+endk   = 90.
 labek  = int(endk/1000.)
-Numk   = 55000
+Numk   = 550
 labNk  = int(Numk/1000.)
 k      = np.linspace(-endk,endk,Numk)# + ome*100.
 dk     = k[1]-k[0]
@@ -156,14 +156,14 @@ Ar     = 1/A
 
 hbar   = 6.62607004 
 kb     = 1.38064852
-T      = 300.#00001
+T      = 0.00001
 therm  = hbar/(kb*T)
 nke    = 2./(np.exp(therm*c*np.abs(k))-1) + 1.
 NFock  = 10
 
-endt   = 6000.
+endt   = 60.
 labet  = int(endt/1000.)
-Nt     = 2**18
+Nt     = 2**10#8
 labNt  = int(np.log2(Nt))
 t      = np.linspace(0,endt,Nt)
 kaptau = 1.
@@ -233,7 +233,8 @@ for i in range(0,endloop):
 	g0  = np.sqrt(kappa*2*c/np.pi)
 	if Tau==True:
 		if Change == "tau":
-			tau = int((600+0.05*tauv[i])*np.pi/dt)
+#			tau = int((600+0.05*tauv[i])*np.pi/dt)
+			tau = int(1000.*tauv[i]/dt)
 #			tau = int(500./dt*tauv[i])
 #			tau = int(1/(2*np.pi*tauv[i])/dt)
 		else:
@@ -260,7 +261,16 @@ for i in range(0,endloop):
 	rho_wn=rho_fb(Nt,tau,dt,k,nke,A,Ar,B,Br,D,Ck,kAB,Fock)
 	evol = rho_wn/np.sqrt(norm)
 	time_out = np.transpose(np.vstack((t.real,np.real(np.abs(rho_wn)**2),rho_wn)))
-	np.savetxt("./Data/time_evol_tau=%d_omt=%d_kapt=%d_Fock%d.txt" % (tau*dt, omt,kapt,NFock), time_out)
+	if Fock==True:
+		if Tau==True:
+			np.savetxt("./Data/Fock%d/time_evol_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (NFock,tau*dt, omt,kapt,labek,labNk,labet,labNt), time_out)
+		else:
+			np.savetxt("./Data/Fock%d/nofb/time_evol_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (NFock,tau*dt, omt,kapt,labek,labNk,labet,labNt), time_out)
+	else:
+		if Tau==True:
+			np.savetxt("./Data/T=%d/time_evol_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (T,tau*dt, omt,kapt,labek,labNk,labet,labNt), time_out)
+		else:
+			np.savetxt("./Data/T=%d/nofb/time_evol_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (T,tau*dt, omt,kapt,labek,labNk,labet,labNt), time_out)
 	time_out = None
 
 	if Change == "kappa":
@@ -296,7 +306,16 @@ for i in range(0,endloop):
 	freqr = np.fft.fftfreq(Nt,(endt)/(Nt-1))
 	freq = np.fft.fftshift(freqr)
 	freq_out = np.transpose(np.vstack((freq.real,four.real,four)))
-	np.savetxt("./Data/FT_tau=%d_omt=%d_kapt=%d_Fock%d.txt" % (tau*dt, omt,kapt,NFock), freq_out)
+	if Fock==True:
+		if Tau==True:
+			np.savetxt("./Data/Fock%d/FT_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (NFock,tau*dt, omt,kapt,labek,labNk,labet,labNt), freq_out)
+		else:
+			np.savetxt("./Data/Fock%d/nofb/FT_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (NFock,tau*dt, omt,kapt,labek,labNk,labet,labNt), freq_out)
+	else:
+		if Tau==True:
+			np.savetxt("./Data/T=%d/FT_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (T,tau*dt, omt,kapt,labek,labNk,labet,labNt), freq_out)
+		else:
+			np.savetxt("./Data/T=%d/nofb/FT_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (T,tau*dt, omt,kapt,labek,labNk,labet,labNt), freq_out)
 	freq_out=None
 
 	now3 = time.time()
@@ -395,12 +414,12 @@ else:
 				fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/oma=10/num_fb_tau=%d_omtp%d.png" % (T,tau*dt,omt*10))
 	else:
 		if Fock==True:
-#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=10/num_fb_T=%d_notau.png" % (NFock,T))
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=pip8/num_fb_T=%d_notau.png" % (NFock,T))
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=10/num_fb_T=%d_notau_kap=%dp1000.png" % (NFock,T,kappa*1000))
+#			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/oma=pip8/num_fb_T=%d_notau.png" % (NFock,T))
 #			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Fock/Fock%d/tau=2001/num_fb_T=%d_notau_om%d.png" % (NFock,T,omlab*10))
 #			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=0_notau_Fock1_log.png")
 		else:
-			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/oma=10/num_fb_notau_kap=%d.png" % (T,kappa*10))
+			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/oma=10/num_fb_notau_kap=%dp1000.png" % (T,kappa*1000))
 #			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/With feedback/Thermal/T=%d/tau=2001/num_fb_notau_om%d.png" % (T,omlab*10))
 #			fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_fb_T=%d_notau_log.png" % T)
 	end=time.time()
