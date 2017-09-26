@@ -63,9 +63,9 @@ NFock = 10
 show  = False
 T     = 0.00001
 
-D     = 0.7
-oma   = np.pi/8.#10 #in GHz
-kappav = np.array([0.001,0.1,1])  #in GHz
+D     = 5#0.7
+oma   = 10.#np.pi/8.#10 #in GHz
+kappav = np.array([0.1])#np.array([0.001,0.1,1])  #in GHz
 gamma = 0.001 #in GHz
 
 hbar  = 6.62607004
@@ -121,7 +121,7 @@ if damp==True:
 		freqr = np.fft.fftfreq(t.size,endt/(Nt-1))
 		freq = np.fft.fftshift(freqr)
 	
-		ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0])#,freq,four.imag)
+		ax[1].plot(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0])#,freq,four.imag)
 	#	ax[1].semilogy(freq,four.imag,color=colors[collab[i]],ls=linest[i],lw=linew[0])#,freq,four.imag)
 	#	ax[2].semilogy(freq,four.real**2+four.imag**2,color=colors[collab[i]],ls=linest[i],lw=linew[0])#,freq,four.imag)
 else:
@@ -154,7 +154,7 @@ ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[0].set_xlim(0,2000)
 ax[0].set_xlim(0,500)
 ax[1].set_xlim(-40,40)
-ax[1].set_ylim(10**(-8),1)
+#ax[1].set_ylim(10**(-8),1)
 #ax[2].set_ylim(10**(-4),10**4)
 
 ### TIMER ENDS ###
@@ -169,17 +169,17 @@ if show==True:
 else:
 	if damp==True:
 		if Fock==True:
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock%d_diffom.png" % NFock)
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock%d_D=%dp10.png" % (NFock,D*10))
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_Fock_s.png")
 		else:
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0.png")
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0_D=%dp10.png" % (D*10))
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_damp_evol+spec_T=0_s.png")
 	else:
 		if Fock==True:
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock%d_diffom.png" % NFock)
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock%d_D=%dp10.png" % (NFock,D*10))
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_Fock_s.png")
 		else:
-			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_T=0.png")
+			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_T=0_D=%dp10.png" % (D*10))
 #			plt.savefig("/home/niki/Dokumente/Python/Analytic plots/analytic_nodamp_evol+spec_T=0_s.png")
 
 

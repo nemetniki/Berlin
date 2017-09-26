@@ -111,14 +111,14 @@ def rho_d(gd, gam, oma, kappa, nd, dt, Nt, k, dk, therm, Fock):
 Fock   = False
 show   = False
 
-gd     = .7
+gd     = 5.#.7
 oma    = 10.#np.pi/8. #in GHz
 kappav = np.array([0.1,0.2,0.5])  #in GHz
 #kappav = np.array([0.001,0.1,1])  #in GHz
 gam    = 0.001 #in GHz
 hbar   = 6.62607004 
 kb     = 1.38064852
-T      = 0.00001
+T      = 3000.#00001
 c      = 0.003
 nd     = 1./(np.exp(hbar*oma/kb/T)-1)
 endt   = 6000.
@@ -127,9 +127,9 @@ Nt     = 2**18
 labNt  = int(np.log2(Nt))
 t      = np.linspace(0,endt,Nt)
 dt     = (endt)/(Nt-1)
-endk   = 9000.
+endk   = 20000.
 labek  = int(endk/1000.)
-Nk     = 55000
+Nk     = 120000
 labNk  = int(Nk/1000.)
 ome    = 0.
 k      = np.linspace(-endk,endk,Nk)# + ome*100.
@@ -234,7 +234,7 @@ for i in range(0,kappav.size):
 	############
 	### PLOT ###
 	############
-	ax[1].semilogy(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0],label="$\kappa=%.3f$" % kappa)
+	ax[1].plot(2*np.pi*freq,four.real,color=colors[collab[i]],ls=linest[i],lw=linew[0],label="$\kappa=%.3f$" % kappa)
 	ax[1].grid(True)
 
 ax[0].grid(True)
@@ -252,7 +252,7 @@ if T>.1:
 	ax[0].set_xlim(0,500)
 else:
 	ax[0].set_xlim(0,500)#endt)
-ax[1].set_ylim(10**(-8),1)
+#ax[1].set_ylim(10**(-8),1)
 ax[1].set_xlim(-40,40)
 
 
@@ -269,12 +269,12 @@ if show==True:
 	plt.show()
 else:
 	if Fock==True:
-		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_T=0_Fock%d.png" % (labek,labNk,labet,labNt,NFock))
-		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock%d.png" % (labek,labNk,labet,labNt,NFock))
-#		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock1.png" % (labek,labNk,labet,labNt))
+		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/Without feedback/Fock/Fock%d/oma=10/kend%de_Nk%de_endt%de_Nt2e%d_T=0_D=%dp10.png" % (NFock,labek,labNk,labet,labNt,gd*10))
+		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/Without feedback/Fock/Fock%d/oma=10/check_kend%de_Nk%de_endt%de_Nt2e%d__T=0_D=%dp10.png" % (NFock,labek,labNk,labet,labNt,gd*10))
+#		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d__T=0_Fock1_D=%dp10.png" % (labek,labNk,labet,labNt,gd*10))
 	else:
-		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d_kapmask.png" % (labek,labNk,labet,labNt,T))
-		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_check_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d_kapmask.png" % (labek,labNk,labet,labNt,T))
-#		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d.png" % (labek,labNk,labet,labNt,T))
+		fig.savefig("/home/niki/Dokumente/Python/Numerical plots/Without feedback/Thermal/T=%d/oma=10/kend%de_Nk%de_endt%de_Nt2e%d_D=%dp10.png" % (T,labek,labNk,labet,labNt,gd*10))
+		fig2.savefig("/home/niki/Dokumente/Python/Numerical plots/Without feedback/Thermal/T=%d/oma=10/check_kend%de_Nk%de_endt%de_Nt2e%d_D=%dp10.png" % (T,labek,labNk,labet,labNt,gd*10))
+#		fig3.savefig("/home/niki/Dokumente/Python/Numerical plots/numeric2_orig_kend%de_Nk%de_endt%de_Nt2e%d_therm_T=%d_D=%dp10.png" % (labek,labNk,labet,labNt,T,gd*10))
 
 
