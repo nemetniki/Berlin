@@ -122,14 +122,13 @@ Tau    = False
 Change = "tau" # "oma", "kappa"
 plottime = 500.
 
-D      = 0.1#.7
+D      = 1.#.7
 
 if Change == "tau":
 	oma    = 10.#np.pi/8. #in 100GHz
-	tauv   = np.array([1.,21.,102.,302.])
-#	tauv   = np.array([.1,1.,10.])
-#	tauv   = np.array([50,100,150,200])
-	kappa  = 9.#0.2
+	tauv   = np.array([1.,12.,43.,84.])
+#	tauv   = np.array([1.,1002.,2003.,4004.,10005.])
+	kappa  = 0.2
 #	kappa  = 0.001
 elif Change == "oma":
 	#omav   = np.arange(1,4)*np.pi/(2.**5.)
@@ -156,7 +155,7 @@ Ar     = 1/A
 
 hbar   = 6.62607004 
 kb     = 1.38064852
-T      = 0.00001
+T      = 3.#00001
 therm  = hbar/(kb*T)
 nke    = 2./(np.exp(therm*c*np.abs(k))-1) + 1.
 NFock  = 1
@@ -233,7 +232,7 @@ for i in range(0,endloop):
 	g0  = np.sqrt(kappa*2*c/np.pi)
 	if Tau==True:
 		if Change == "tau":
-			tau = int((600+0.05*tauv[i])*np.pi/dt)
+			tau = int((100+0.05*tauv[i])*np.pi/dt)
 #			tau = int(1000.*tauv[i]/dt)
 #			tau = int(500./dt*tauv[i])
 #			tau = int(1/(2*np.pi*tauv[i])/dt)
@@ -264,17 +263,17 @@ for i in range(0,endloop):
 	time_out = np.transpose(np.vstack((t.real,rho_wn)))
 	if Fock==True:
 		if Tau==True:
-			np.savetxt("./Data/Fock%d/time_evol_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (NFock,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt),\
+			np.savetxt("./Data/Fock%d/time_evol_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d_kap=%dp10.txt" % (NFock,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt,kappa*10),\
 			time_out)
 		else:
-			np.savetxt("./Data/Fock%d/nofb/time_evol_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (NFock,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt),\
+			np.savetxt("./Data/Fock%d/nofb/time_evol_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d_kap=%dp10.txt" % (NFock,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt,kappa*10),\
 			time_out)
 	else:
 		if Tau==True:
-			np.savetxt("./Data/T=%d/time_evol_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (T,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt),\
+			np.savetxt("./Data/T=%d/time_evol_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d_kap=%dp10.txt" % (T,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt,kappa*10),\
 			time_out)
 		else:
-			np.savetxt("./Data/T=%d/nofb/time_evol_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (T,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt),\
+			np.savetxt("./Data/T=%d/nofb/time_evol_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d_kap=%dp10.txt" % (T,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt,kappa*10),\
 			time_out)
 	time_out = None
 
@@ -314,17 +313,17 @@ for i in range(0,endloop):
 	freq_out = np.transpose(np.vstack((freq.real,four)))
 	if Fock==True:
 		if Tau==True:
-			np.savetxt("./Data/Fock%d/FT_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (NFock,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt),\
+			np.savetxt("./Data/Fock%d/FT_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d_kap=%dp10.txt" % (NFock,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt,kappa*10),\
 			freq_out)
 		else:
-			np.savetxt("./Data/Fock%d/nofb/FT_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (NFock,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt),\
+			np.savetxt("./Data/Fock%d/nofb/FT_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d_kap=%dp10.txt" % (NFock,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt,kappa*10),\
 			freq_out)
 	else:
 		if Tau==True:
-			np.savetxt("./Data/T=%d/FT_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (T,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt),\
+			np.savetxt("./Data/T=%d/FT_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d_kap=%dp10.txt" % (T,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt,kappa*10),\
 			freq_out)
 		else:
-			np.savetxt("./Data/T=%d/nofb/FT_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d.txt" % (T,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt),\
+			np.savetxt("./Data/T=%d/nofb/FT_D=%dp10_tau=%d_omt=%d_kapt=%d_endk=%de_Nk=%de_endt=%de_Nt=2e%d_kap=%dp10.txt" % (T,D*10,tau*dt, omt,kapt,labek,labNk,labet,labNt,kappa*10),\
 			freq_out)
 	freq_out=None
 
