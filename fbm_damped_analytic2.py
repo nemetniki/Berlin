@@ -58,21 +58,21 @@ def rho_nodamp_F(D, gamma, oma,nd, t,NFock):
 ### PARAMETERS ###
 ##################
 damp  = True
-Fock  = True
+Fock  = False
 NFock = 10
 show  = False
 T     = 0.00001
 
-D     = 5#0.7
-oma   = 10.#np.pi/8.#10 #in GHz
-kappav = np.array([0.1])#np.array([0.001,0.1,1])  #in GHz
+D     = 0.005#0.7
+oma   = 0.01#10.#np.pi/8.#10 #in GHz
+kappav = np.array([0.001])#np.array([0.001,0.1,1])  #in GHz
 gamma = 0.001 #in GHz
 
 hbar  = 6.62607004
 kb    = 1.38064852
 nd    = 1./(np.exp(hbar*oma/kb/T)-1)
 
-endt  = 6000#20000
+endt  = 60000#6000
 Nt    = 2**18
 t     = np.linspace(0,endt, Nt)
 
@@ -153,7 +153,8 @@ ax[1].set_ylabel('$\Re{P(\omega)}$',fontsize=30)
 #ax[0].set_ylim(-0.01,.25)
 #ax[0].set_xlim(0,2000)
 ax[0].set_xlim(0,500)
-ax[1].set_xlim(-40,40)
+ax[1].set_xlim(-4*oma,4*oma)
+#ax[1].set_xlim(-1,1)
 #ax[1].set_ylim(10**(-8),1)
 #ax[2].set_ylim(10**(-4),10**4)
 
