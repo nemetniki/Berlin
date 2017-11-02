@@ -63,17 +63,17 @@ NFock = 10
 show  = False
 T     = 0.00001
 
-D     = 0.005#0.7
-oma   = 0.01#10.#np.pi/8.#10 #in GHz
-kappav = np.array([0.001])#np.array([0.001,0.1,1])  #in GHz
+D     = 2.#0.7
+oma   = 10.#np.pi/8.#10 #in GHz
+kappav = np.array([0.001,0.2])#np.array([0.001,0.1,1])  #in GHz
 gamma = 0.001 #in GHz
 
 hbar  = 6.62607004
 kb    = 1.38064852
 nd    = 1./(np.exp(hbar*oma/kb/T)-1)
 
-endt  = 60000#6000
-Nt    = 2**18
+endt  = 200#6000
+Nt    = 2**16
 t     = np.linspace(0,endt, Nt)
 
 ################

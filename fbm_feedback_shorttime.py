@@ -121,12 +121,12 @@ show   = False
 Tau    = False
 Change = "tau" # "oma", "kappa"
 
-D      = 2.0#.7
+D      = 2.#.7
 
 if Change == "tau":
-	oma    = 5.#0.01#np.pi/8. #in 100GHz
+	oma    = 10.#0.01#np.pi/8. #in 100GHz
 	taum   = .1*np.pi
-	tauv   = np.array([4.,8.,12.,16.])
+	tauv   = np.array([10.,12.,14.,16.])
 #	tauv   = np.array([1.,1002.,2003.,4004.,10005.])
 	kappa  = 0.2#0.001
 #	kappa  = 0.001
@@ -155,12 +155,12 @@ Ar     = 1/A
 
 hbar   = 6.62607004 
 kb     = 1.38064852
-T      = .00001
+T      = 3000.#00001
 therm  = hbar/(kb*T)
 nke    = 2./(np.exp(therm*c*np.abs(k))-1) + 1.
 NFock  = 1
 
-endt   = 7.
+endt   = 3.5
 labet  = int(endt/1000.)
 Nt     = 2**10
 labNt  = int(np.log2(Nt))
